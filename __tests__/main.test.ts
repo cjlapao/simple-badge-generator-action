@@ -220,9 +220,9 @@ describe('main', () => {
           return defaultThreshold
         case 'semaphore-green-color':
           return defaultColor
-        case 'boolean-red-color':
+        case 'boolean-false-color':
           return defaultColor
-        case 'boolean-green-color':
+        case 'boolean-true-color':
           return defaultColor
         default:
           return ''

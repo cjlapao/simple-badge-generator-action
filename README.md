@@ -5,14 +5,15 @@
 [![CI](https://github.com/cjlapao/simple-badge-generator-action/actions/workflows/ci.yml/badge.svg)](https://github.com/cjlapao/simple-badge-generator-action/actions/workflows/ci.yml)
 
 This action generates simple badges for flutter projects with some advanced features.
-You can simple create badges with an icon and text or more elaborated ones like boolean badges, semaphores and cobertura coverage ones.
+You can simple create badges with an icon and text or more elaborated ones like
+boolean badges, semaphores and cobertura coverage ones.
 
 for example a simple badge could be something like this:  
 ![github actions](./img/github_actions.svg)  
 or a more elaborated one like this:  
 ![coverage](./img/cobertura.svg)  
-where the coverage is automatically calculated and the color is automatically selected based
-on the coverage percentage based on a cobertura xml report.
+where the coverage is automatically calculated and the color is automatically
+selected based on the coverage percentage based on a cobertura xml report.
 
 ## Usage
 
@@ -54,15 +55,19 @@ there are a lot more possible combinations, see the reference below for more inf
 
 ### Simple
 
-this is a simple badge that has a title and a value, it can also contain an icon or have no value at all.
-You can use this to inform about the license of the project or the version of the project or even dependencies.  
+this is a simple badge that has a title and a value, it can also contain an icon
+or have no value at all. You can use this to inform about the license of the
+project or the version of the project or even dependencies.  
 Examples:  
 ![simple](./img/github_actions.svg)  
 ![simple](./img/plastic.svg)
 
 ### Cobertura
 
-This badge takes in a cobertura xml report and calculates the coverage percentage and generates a badge with the coverage percentage and a color based on the coverage percentage. the colors will be gardient from red to yellow to green depending on the threshold values.
+This badge takes in a cobertura xml report and calculates the coverage percentage
+and generates a badge with the coverage percentage and a color based on the
+coverage percentage. the colors will be gradient from red to yellow to green
+depending on the threshold values.
 
 Examples:  
 ![cobertura](./img/cobertura.svg)  
@@ -71,12 +76,17 @@ Examples:
 
 ### Semaphore
 
-This badge takes in three possible values for each of the colors, red, yellow and green. then it will generate a badge with the color based on the value that is passed in, if none is matched then it renders it with the default color.
+This badge takes in three possible values for each of the colors, red, yellow
+and green. then it will generate a badge with the color based on the value that
+is passed in, if none is matched then it renders it with the default color.
 you can also personalize the values for each of the colors.
 
 ### Boolean
 
-Very similar to the semaphore badge but it only has two possible values, true or false. The value needs to be a boolean value and it will generate a badge with the color based on the value that is passed in, if none is matched then it renders it with the default color. it will accept a range of possible true values:
+Very similar to the semaphore badge but it only has two possible values, true or
+false. The value needs to be a boolean value and it will generate a badge with
+the color based on the value that is passed in, if none is matched then it
+renders it with the default color. it will accept a range of possible true values:
 
 - `true`
 - `t`

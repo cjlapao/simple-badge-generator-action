@@ -72,7 +72,7 @@ describe('Badge', () => {
   it('should generate a badge with title and value as percentage yellow', () => {
     badge.title = 'Coverage'
     badge.value = '45'
-    badge.yellowThreshold = 40
+    badge.coberturaYellowThreshold = 40
     badge.type = 'cobertura'
     const expectedSvg = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="125.32" height="20" role="img" aria-label="Coverage: 45%">
   <title>Coverage: 45%</title>
@@ -104,7 +104,7 @@ describe('Badge', () => {
   it('should generate a badge with title and value as percentage red', () => {
     badge.title = 'Coverage'
     badge.value = '45'
-    badge.yellowThreshold = 70
+    badge.coberturaYellowThreshold = 70
     badge.type = 'cobertura'
     const expectedSvg = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="125.32" height="20" role="img" aria-label="Coverage: 45%">
   <title>Coverage: 45%</title>

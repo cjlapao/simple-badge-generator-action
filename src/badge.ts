@@ -79,15 +79,15 @@ export class Badge {
       switch (this.type) {
         case 'boolean':
           if (
-            this.value.toLocaleUpperCase() === 'true' ||
-            this.value === 't' ||
-            this.value === '1' ||
-            this.value === 'yes' ||
-            this.value === 'y' ||
-            this.value === 'on' ||
-            this.value === 'enabled' ||
-            this.value === 'active' ||
-            this.value === 'success'
+            this.value.toLocaleLowerCase() === 'true' ||
+            this.value.toLocaleLowerCase() === 't' ||
+            this.value.toLocaleLowerCase() === '1' ||
+            this.value.toLocaleLowerCase() === 'yes' ||
+            this.value.toLocaleLowerCase() === 'y' ||
+            this.value.toLocaleLowerCase() === 'on' ||
+            this.value.toLocaleLowerCase() === 'enabled' ||
+            this.value.toLocaleLowerCase() === 'active' ||
+            this.value.toLocaleLowerCase() === 'success'
           ) {
             this.valueFillColor = greenColor
             if (this.booleanTrueColor) {
