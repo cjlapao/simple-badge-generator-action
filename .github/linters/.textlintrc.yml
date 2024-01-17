@@ -1,0 +1,12 @@
+plugins:
+filters:
+  exclude:
+    - node_modules
+    - dist
+    - coverage
+    - __tests__
+    - '*.json'
+rules:
+  terminology:
+   skip:
+    - 'Lodash'
