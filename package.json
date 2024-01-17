@@ -29,8 +29,8 @@
     "scripts": {
         "bundle": "npm run format:write && npm run package",
         "ci-test": "jest --runInBand",
-        "format:write": "prettier --write **/*.js",
-        "format:check": "prettier --check **/*.js",
+        "format:write": "prettier --write **/*.ts",
+        "format:check": "prettier --check **/*.ts",
         "lint": "npx eslint . -c ./.github/linters/.eslintrc.yml",
         "package": "ncc build src/index.ts --license licenses.txt",
         "package:watch": "npm run package -- --watch",

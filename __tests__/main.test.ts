@@ -3,9 +3,8 @@ import { Badge } from '../src/badge'
 import * as core from '@actions/core'
 import * as fs from 'fs'
 
-
 jest.mock('../src/badge')
-jest.mock('@actions/core');
+jest.mock('@actions/core')
 jest.mock('fs', () => ({
   promises: {
     access: jest.fn()
@@ -18,10 +17,9 @@ jest.mock('fs', () => ({
   }),
   existsSync: jest.fn(),
   writeFileSync: jest.fn()
-}));
+}))
 
-beforeEach(() => {
-})
+beforeEach(() => {})
 
 describe('main', () => {
   const badgeMock = jest.mocked(Badge, { shallow: false })
@@ -40,7 +38,7 @@ describe('main', () => {
     expect(badgeMock).toHaveBeenCalledWith()
     const instance = badgeMock.mock.instances[0]
     expect(instance.title).toBeUndefined()
-    expect(instance.type).toBe("simple")
+    expect(instance.type).toBe('simple')
     expect(instance.generate).not.toHaveBeenCalled()
     expect(coreMock.setFailed).toHaveBeenCalledWith('Title is required')
   })
@@ -58,12 +56,12 @@ describe('main', () => {
   it('runs with unknown badge-type then simple is set', async () => {
     coreMock.getInput.mockImplementation((name: string) => {
       switch (name) {
-        case "badge-type":
-          return "unknown"
-        case "title":
-          return "title"
+        case 'badge-type':
+          return 'unknown'
+        case 'title':
+          return 'title'
         default:
-          return ""
+          return ''
       }
     })
 
@@ -71,8 +69,8 @@ describe('main', () => {
 
     expect(badgeMock).toHaveBeenCalledWith()
     const instance = badgeMock.mock.instances[0]
-    expect(instance.title).toBe("title")
-    expect(instance.type).toBe("simple")
+    expect(instance.title).toBe('title')
+    expect(instance.type).toBe('simple')
     expect(instance.generate).toHaveBeenCalled()
     expect(fsMockWriterFileSync).toHaveBeenCalled()
   })
@@ -80,12 +78,12 @@ describe('main', () => {
   it('runs with badge-type with type simple is set', async () => {
     coreMock.getInput.mockImplementation((name: string) => {
       switch (name) {
-        case "badge-type":
-          return "simple"
-        case "title":
-          return "title"
+        case 'badge-type':
+          return 'simple'
+        case 'title':
+          return 'title'
         default:
-          return ""
+          return ''
       }
     })
 
@@ -93,8 +91,8 @@ describe('main', () => {
 
     expect(badgeMock).toHaveBeenCalledWith()
     const instance = badgeMock.mock.instances[0]
-    expect(instance.title).toBe("title")
-    expect(instance.type).toBe("simple")
+    expect(instance.title).toBe('title')
+    expect(instance.type).toBe('simple')
     expect(instance.generate).toHaveBeenCalled()
     expect(fsMockWriterFileSync).toHaveBeenCalled()
   })
@@ -102,12 +100,12 @@ describe('main', () => {
   it('runs with badge-type with type boolean is set', async () => {
     coreMock.getInput.mockImplementation((name: string) => {
       switch (name) {
-        case "badge-type":
-          return "boolean"
-        case "title":
-          return "title"
+        case 'badge-type':
+          return 'boolean'
+        case 'title':
+          return 'title'
         default:
-          return ""
+          return ''
       }
     })
 
@@ -115,8 +113,8 @@ describe('main', () => {
 
     expect(badgeMock).toHaveBeenCalledWith()
     const instance = badgeMock.mock.instances[0]
-    expect(instance.title).toBe("title")
-    expect(instance.type).toBe("boolean")
+    expect(instance.title).toBe('title')
+    expect(instance.type).toBe('boolean')
     expect(instance.generate).toHaveBeenCalled()
     expect(fsMockWriterFileSync).toHaveBeenCalled()
   })
@@ -124,12 +122,12 @@ describe('main', () => {
   it('runs with badge-type with type semaphore is set', async () => {
     coreMock.getInput.mockImplementation((name: string) => {
       switch (name) {
-        case "badge-type":
-          return "semaphore"
-        case "title":
-          return "title"
+        case 'badge-type':
+          return 'semaphore'
+        case 'title':
+          return 'title'
         default:
-          return ""
+          return ''
       }
     })
 
@@ -137,8 +135,8 @@ describe('main', () => {
 
     expect(badgeMock).toHaveBeenCalledWith()
     const instance = badgeMock.mock.instances[0]
-    expect(instance.title).toBe("title")
-    expect(instance.type).toBe("semaphore")
+    expect(instance.title).toBe('title')
+    expect(instance.type).toBe('semaphore')
     expect(instance.generate).toHaveBeenCalled()
     expect(fsMockWriterFileSync).toHaveBeenCalled()
   })
@@ -146,12 +144,12 @@ describe('main', () => {
   it('runs with badge-type with type cobertura is set', async () => {
     coreMock.getInput.mockImplementation((name: string) => {
       switch (name) {
-        case "badge-type":
-          return "cobertura"
-        case "title":
-          return "title"
+        case 'badge-type':
+          return 'cobertura'
+        case 'title':
+          return 'title'
         default:
-          return ""
+          return ''
       }
     })
     jest.spyOn(fs, 'existsSync').mockImplementation(() => true)
@@ -160,9 +158,9 @@ describe('main', () => {
 
     expect(badgeMock).toHaveBeenCalledWith()
     const instance = badgeMock.mock.instances[0]
-    expect(instance.title).toBe("title")
-    expect(instance.type).toBe("cobertura")
-    expect(instance.value).toBe("80.00")
+    expect(instance.title).toBe('title')
+    expect(instance.type).toBe('cobertura')
+    expect(instance.value).toBe('80.00')
     expect(instance.generate).toHaveBeenCalled()
     expect(fsMockWriterFileSync).toHaveBeenCalled()
   })
@@ -170,12 +168,12 @@ describe('main', () => {
   it('runs with badge-type with type cobertura is set', async () => {
     coreMock.getInput.mockImplementation((name: string) => {
       switch (name) {
-        case "badge-type":
-          return "cobertura"
-        case "title":
-          return "title"
+        case 'badge-type':
+          return 'cobertura'
+        case 'title':
+          return 'title'
         default:
-          return ""
+          return ''
       }
     })
     jest.spyOn(fs, 'existsSync').mockImplementation(() => false)
@@ -184,52 +182,52 @@ describe('main', () => {
 
     expect(badgeMock).toHaveBeenCalledWith()
     const instance = badgeMock.mock.instances[0]
-    expect(instance.title).toBe("title")
-    expect(instance.type).toBe("cobertura")
+    expect(instance.title).toBe('title')
+    expect(instance.type).toBe('cobertura')
     expect(coreMock.setFailed).toHaveBeenCalledWith('File not found: ')
     expect(instance.generate).not.toHaveBeenCalled()
     expect(fsMockWriterFileSync).not.toHaveBeenCalled()
   })
 
   it('runs with all configurations they are set in the badge', async () => {
-    const defaultColor = "#4c1"
-    const defaultThreshold = "80"
+    const defaultColor = '#4c1'
+    const defaultThreshold = '80'
     coreMock.getInput.mockImplementation((name: string) => {
       switch (name) {
-        case "badge-type":
-          return "simple"
-        case "title":
-          return "title"
-        case "title-fill-color":
+        case 'badge-type':
+          return 'simple'
+        case 'title':
+          return 'title'
+        case 'title-fill-color':
           return defaultColor
-        case "title-font-color":
+        case 'title-font-color':
           return defaultColor
-        case "value-fill-color":
+        case 'value-fill-color':
           return defaultColor
-        case "value-font-color":
+        case 'value-font-color':
           return defaultColor
-        case "cobertura-yellow-threshold":
+        case 'cobertura-yellow-threshold':
           return defaultThreshold
-        case "cobertura-green-threshold":
+        case 'cobertura-green-threshold':
           return defaultThreshold
-        case "semaphore-red-value":
+        case 'semaphore-red-value':
           return defaultThreshold
-        case "semaphore-red-color":
+        case 'semaphore-red-color':
           return defaultColor
-        case "semaphore-yellow-value":
+        case 'semaphore-yellow-value':
           return defaultThreshold
-        case "semaphore-yellow-color":
+        case 'semaphore-yellow-color':
           return defaultColor
-        case "semaphore-green-value":
+        case 'semaphore-green-value':
           return defaultThreshold
-        case "semaphore-green-color":
+        case 'semaphore-green-color':
           return defaultColor
-        case "boolean-red-color":
+        case 'boolean-red-color':
           return defaultColor
-        case "boolean-green-color":
+        case 'boolean-green-color':
           return defaultColor
         default:
-          return ""
+          return ''
       }
     })
 
@@ -237,8 +235,8 @@ describe('main', () => {
 
     expect(badgeMock).toHaveBeenCalledWith()
     const instance = badgeMock.mock.instances[0]
-    expect(instance.title).toBe("title")
-    expect(instance.type).toBe("simple")
+    expect(instance.title).toBe('title')
+    expect(instance.type).toBe('simple')
     expect(instance.titleFillColor).toBe(defaultColor)
     expect(instance.titleFontColor).toBe(defaultColor)
     expect(instance.valueFillColor).toBe(defaultColor)
@@ -260,14 +258,14 @@ describe('main', () => {
   it('runs with badge-theme flat is set', async () => {
     coreMock.getInput.mockImplementation((name: string) => {
       switch (name) {
-        case "badge-type":
-          return "simple"
-        case "title":
-          return "title"
-        case "badge-theme":
-          return "flat"
+        case 'badge-type':
+          return 'simple'
+        case 'title':
+          return 'title'
+        case 'badge-theme':
+          return 'flat'
         default:
-          return ""
+          return ''
       }
     })
 
@@ -275,9 +273,9 @@ describe('main', () => {
 
     expect(badgeMock).toHaveBeenCalledWith()
     const instance = badgeMock.mock.instances[0]
-    expect(instance.title).toBe("title")
-    expect(instance.type).toBe("simple")
-    expect(instance.theme).toBe("flat")
+    expect(instance.title).toBe('title')
+    expect(instance.type).toBe('simple')
+    expect(instance.theme).toBe('flat')
     expect(instance.generate).toHaveBeenCalled()
     expect(fsMockWriterFileSync).toHaveBeenCalled()
   })
@@ -285,14 +283,14 @@ describe('main', () => {
   it('runs with badge-theme plastic is set', async () => {
     coreMock.getInput.mockImplementation((name: string) => {
       switch (name) {
-        case "badge-type":
-          return "simple"
-        case "title":
-          return "title"
-        case "badge-theme":
-          return "plastic"
+        case 'badge-type':
+          return 'simple'
+        case 'title':
+          return 'title'
+        case 'badge-theme':
+          return 'plastic'
         default:
-          return ""
+          return ''
       }
     })
 
@@ -300,9 +298,9 @@ describe('main', () => {
 
     expect(badgeMock).toHaveBeenCalledWith()
     const instance = badgeMock.mock.instances[0]
-    expect(instance.title).toBe("title")
-    expect(instance.type).toBe("simple")
-    expect(instance.theme).toBe("plastic")
+    expect(instance.title).toBe('title')
+    expect(instance.type).toBe('simple')
+    expect(instance.theme).toBe('plastic')
     expect(instance.generate).toHaveBeenCalled()
     expect(fsMockWriterFileSync).toHaveBeenCalled()
   })
@@ -310,14 +308,14 @@ describe('main', () => {
   it('runs with badge-theme flat-square is set', async () => {
     coreMock.getInput.mockImplementation((name: string) => {
       switch (name) {
-        case "badge-type":
-          return "simple"
-        case "title":
-          return "title"
-        case "badge-theme":
-          return "flat-square"
+        case 'badge-type':
+          return 'simple'
+        case 'title':
+          return 'title'
+        case 'badge-theme':
+          return 'flat-square'
         default:
-          return ""
+          return ''
       }
     })
 
@@ -325,9 +323,9 @@ describe('main', () => {
 
     expect(badgeMock).toHaveBeenCalledWith()
     const instance = badgeMock.mock.instances[0]
-    expect(instance.title).toBe("title")
-    expect(instance.type).toBe("simple")
-    expect(instance.theme).toBe("flat-square")
+    expect(instance.title).toBe('title')
+    expect(instance.type).toBe('simple')
+    expect(instance.theme).toBe('flat-square')
     expect(instance.generate).toHaveBeenCalled()
     expect(fsMockWriterFileSync).toHaveBeenCalled()
   })
@@ -335,14 +333,14 @@ describe('main', () => {
   it('runs with badge-theme plastic-square is set', async () => {
     coreMock.getInput.mockImplementation((name: string) => {
       switch (name) {
-        case "badge-type":
-          return "simple"
-        case "title":
-          return "title"
-        case "badge-theme":
-          return "plastic-square"
+        case 'badge-type':
+          return 'simple'
+        case 'title':
+          return 'title'
+        case 'badge-theme':
+          return 'plastic-square'
         default:
-          return ""
+          return ''
       }
     })
 
@@ -350,9 +348,9 @@ describe('main', () => {
 
     expect(badgeMock).toHaveBeenCalledWith()
     const instance = badgeMock.mock.instances[0]
-    expect(instance.title).toBe("title")
-    expect(instance.type).toBe("simple")
-    expect(instance.theme).toBe("plastic-square")
+    expect(instance.title).toBe('title')
+    expect(instance.type).toBe('simple')
+    expect(instance.theme).toBe('plastic-square')
     expect(instance.generate).toHaveBeenCalled()
     expect(fsMockWriterFileSync).toHaveBeenCalled()
   })
@@ -360,14 +358,14 @@ describe('main', () => {
   it('runs with badge-theme unknown, plastic is set', async () => {
     coreMock.getInput.mockImplementation((name: string) => {
       switch (name) {
-        case "badge-type":
-          return "simple"
-        case "title":
-          return "title"
-        case "badge-theme":
-          return "plastic-square-old"
+        case 'badge-type':
+          return 'simple'
+        case 'title':
+          return 'title'
+        case 'badge-theme':
+          return 'plastic-square-old'
         default:
-          return ""
+          return ''
       }
     })
 
@@ -375,9 +373,9 @@ describe('main', () => {
 
     expect(badgeMock).toHaveBeenCalledWith()
     const instance = badgeMock.mock.instances[0]
-    expect(instance.title).toBe("title")
-    expect(instance.type).toBe("simple")
-    expect(instance.theme).toBe("plastic")
+    expect(instance.title).toBe('title')
+    expect(instance.type).toBe('simple')
+    expect(instance.theme).toBe('plastic')
     expect(instance.generate).toHaveBeenCalled()
     expect(fsMockWriterFileSync).toHaveBeenCalled()
   })
@@ -385,14 +383,14 @@ describe('main', () => {
   it('runs with badge-icon unknown, none is set', async () => {
     coreMock.getInput.mockImplementation((name: string) => {
       switch (name) {
-        case "badge-type":
-          return "simple"
-        case "title":
-          return "title"
-        case "badge-icon":
-          return "some-icon"
+        case 'badge-type':
+          return 'simple'
+        case 'title':
+          return 'title'
+        case 'badge-icon':
+          return 'some-icon'
         default:
-          return ""
+          return ''
       }
     })
 
@@ -400,9 +398,9 @@ describe('main', () => {
 
     expect(badgeMock).toHaveBeenCalledWith()
     const instance = badgeMock.mock.instances[0]
-    expect(instance.title).toBe("title")
-    expect(instance.type).toBe("simple")
-    expect(instance.icon).toBe("none")
+    expect(instance.title).toBe('title')
+    expect(instance.type).toBe('simple')
+    expect(instance.icon).toBe('none')
     expect(instance.generate).toHaveBeenCalled()
     expect(fsMockWriterFileSync).toHaveBeenCalled()
   })
@@ -410,14 +408,14 @@ describe('main', () => {
   it('runs with badge-icon github is set', async () => {
     coreMock.getInput.mockImplementation((name: string) => {
       switch (name) {
-        case "badge-type":
-          return "simple"
-        case "title":
-          return "title"
-        case "badge-icon":
-          return "github"
+        case 'badge-type':
+          return 'simple'
+        case 'title':
+          return 'title'
+        case 'badge-icon':
+          return 'github'
         default:
-          return ""
+          return ''
       }
     })
 
@@ -425,9 +423,9 @@ describe('main', () => {
 
     expect(badgeMock).toHaveBeenCalledWith()
     const instance = badgeMock.mock.instances[0]
-    expect(instance.title).toBe("title")
-    expect(instance.type).toBe("simple")
-    expect(instance.icon).toBe("github")
+    expect(instance.title).toBe('title')
+    expect(instance.type).toBe('simple')
+    expect(instance.icon).toBe('github')
     expect(instance.generate).toHaveBeenCalled()
     expect(fsMockWriterFileSync).toHaveBeenCalled()
   })
@@ -435,14 +433,14 @@ describe('main', () => {
   it('runs with badge-icon github is set', async () => {
     coreMock.getInput.mockImplementation((name: string) => {
       switch (name) {
-        case "badge-type":
-          return "simple"
-        case "title":
-          return "title"
-        case "badge-icon":
-          return "discord"
+        case 'badge-type':
+          return 'simple'
+        case 'title':
+          return 'title'
+        case 'badge-icon':
+          return 'discord'
         default:
-          return ""
+          return ''
       }
     })
 
@@ -450,9 +448,9 @@ describe('main', () => {
 
     expect(badgeMock).toHaveBeenCalledWith()
     const instance = badgeMock.mock.instances[0]
-    expect(instance.title).toBe("title")
-    expect(instance.type).toBe("simple")
-    expect(instance.icon).toBe("discord")
+    expect(instance.title).toBe('title')
+    expect(instance.type).toBe('simple')
+    expect(instance.icon).toBe('discord')
     expect(instance.generate).toHaveBeenCalled()
     expect(fsMockWriterFileSync).toHaveBeenCalled()
   })

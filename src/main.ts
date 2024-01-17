@@ -14,27 +14,27 @@ export async function run(): Promise<void> {
     const badgePath = core.getInput('badge-path')
     core.info(`Starting action ${badgePath}`)
 
-    const badge = new Badge();
+    const badge = new Badge()
     if (core.getInput('badge-type')) {
       switch (core.getInput('badge-type')) {
-        case "simple":
-          badge.type = "simple"
-          break;
-        case "boolean":
-          badge.type = "boolean"
-          break;
-        case "semaphore":
-          badge.type = "semaphore"
-          break;
-        case "cobertura":
-          badge.type = "cobertura"
-          break;
+        case 'simple':
+          badge.type = 'simple'
+          break
+        case 'boolean':
+          badge.type = 'boolean'
+          break
+        case 'semaphore':
+          badge.type = 'semaphore'
+          break
+        case 'cobertura':
+          badge.type = 'cobertura'
+          break
         default:
-          badge.type = "simple"
-          break;
+          badge.type = 'simple'
+          break
       }
     } else {
-      badge.type = "simple"
+      badge.type = 'simple'
     }
     badge.title = core.getInput('title')
     if (!badge.title) {
@@ -55,41 +55,45 @@ export async function run(): Promise<void> {
     }
     if (core.getInput('badge-theme')) {
       switch (core.getInput('badge-theme')) {
-        case "flat":
-          badge.theme = "flat"
-          break;
-        case "plastic":
-          badge.theme = "plastic"
-          break;
-        case "flat-square":
-          badge.theme = "flat-square"
-          break;
-        case "plastic-square":
-          badge.theme = "plastic-square"
-          break;
+        case 'flat':
+          badge.theme = 'flat'
+          break
+        case 'plastic':
+          badge.theme = 'plastic'
+          break
+        case 'flat-square':
+          badge.theme = 'flat-square'
+          break
+        case 'plastic-square':
+          badge.theme = 'plastic-square'
+          break
         default:
-          badge.theme = "plastic"
-          break;
+          badge.theme = 'plastic'
+          break
       }
     }
     if (core.getInput('badge-icon')) {
       switch (core.getInput('badge-icon')) {
-        case "github":
-          badge.icon = "github"
-          break;
-        case "discord":
-          badge.icon = "discord"
-          break;
+        case 'github':
+          badge.icon = 'github'
+          break
+        case 'discord':
+          badge.icon = 'discord'
+          break
         default:
-          badge.icon = "none"
-          break;
+          badge.icon = 'none'
+          break
       }
     }
     if (core.getInput('cobertura-yellow-threshold')) {
-      badge.coberturaYellowThreshold = parseInt(core.getInput('cobertura-yellow-threshold'))
+      badge.coberturaYellowThreshold = parseInt(
+        core.getInput('cobertura-yellow-threshold')
+      )
     }
     if (core.getInput('cobertura-green-threshold')) {
-      badge.coberturaGreenThreshold = parseInt(core.getInput('cobertura-green-threshold'))
+      badge.coberturaGreenThreshold = parseInt(
+        core.getInput('cobertura-green-threshold')
+      )
     }
     if (core.getInput('semaphore-red-value')) {
       badge.semaphoreRedValue = core.getInput('semaphore-red-value')
@@ -117,27 +121,27 @@ export async function run(): Promise<void> {
     }
 
     switch (badge.type) {
-      case "simple":
+      case 'simple':
         badge.value = core.getInput('value')
-        break;
-      case "boolean":
+        break
+      case 'boolean':
         badge.value = core.getInput('value')
-        break;
-      case "cobertura":
+        break
+      case 'cobertura':
         const coberturaPath = core.getInput('cobertura-path')
         if (!existsSync(coberturaPath)) {
           core.setFailed(`File not found: ${coberturaPath}`)
           return
         }
         const xmlData = readFileSync(coberturaPath, 'utf-8')
-        const parser = new XMLParser({ ignoreAttributes: false });
-        const coberturaValue = parser.parse(xmlData);
-        const lineRate = coberturaValue.coverage["@_line-rate"] * 100
+        const parser = new XMLParser({ ignoreAttributes: false })
+        const coberturaValue = parser.parse(xmlData)
+        const lineRate = coberturaValue.coverage['@_line-rate'] * 100
         badge.value = `${lineRate.toFixed(2)}`
-        break;
-      case "semaphore":
+        break
+      case 'semaphore':
         badge.value = core.getInput('value')
-        break;
+        break
     }
 
     writeFileSync('./.local/output.svg', badge.generate(), 'utf-8')
@@ -146,4 +150,3 @@ export async function run(): Promise<void> {
     if (error instanceof Error) core.setFailed(error.message)
   }
 }
-
