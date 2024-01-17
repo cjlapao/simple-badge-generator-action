@@ -22,7 +22,7 @@ parserOptions:
   ecmaVersion: 2023
   sourceType: module
   requireConfigFile: false
-  project: "tsconfig.json"
+  project: "tsconfig.eslint.json"
   babelOptions:
     babelrc: false
     configFile: false
