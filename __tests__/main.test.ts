@@ -19,8 +19,6 @@ jest.mock('fs', () => ({
   writeFileSync: jest.fn()
 }))
 
-beforeEach(() => {})
-
 describe('main', () => {
   const badgeMock = jest.mocked(Badge, { shallow: false })
   const coreMock = jest.mocked(core, { shallow: false })
@@ -165,7 +163,7 @@ describe('main', () => {
     expect(fsMockWriterFileSync).toHaveBeenCalled()
   })
 
-  it('runs with badge-type with type cobertura is set', async () => {
+  it('runs with badge-type with type cobertura is set, with not file', async () => {
     coreMock.getInput.mockImplementation((name: string) => {
       switch (name) {
         case 'badge-type':
@@ -241,16 +239,16 @@ describe('main', () => {
     expect(instance.titleFontColor).toBe(defaultColor)
     expect(instance.valueFillColor).toBe(defaultColor)
     expect(instance.valueFontColor).toBe(defaultColor)
-    expect(instance.yellowThreshold).toBe(parseInt(defaultThreshold))
-    expect(instance.greenThreshold).toBe(parseInt(defaultThreshold))
+    expect(instance.coberturaYellowThreshold).toBe(parseInt(defaultThreshold))
+    expect(instance.coberturaGreenThreshold).toBe(parseInt(defaultThreshold))
     expect(instance.semaphoreGreenColor).toBe(defaultColor)
     expect(instance.semaphoreGreenValue).toBe(defaultThreshold)
     expect(instance.semaphoreYellowColor).toBe(defaultColor)
     expect(instance.semaphoreYellowValue).toBe(defaultThreshold)
     expect(instance.semaphoreRedColor).toBe(defaultColor)
     expect(instance.semaphoreRedValue).toBe(defaultThreshold)
-    expect(instance.booleanRedColor).toBe(defaultColor)
-    expect(instance.booleanGreenColor).toBe(defaultColor)
+    expect(instance.booleanFalseColor).toBe(defaultColor)
+    expect(instance.booleanTrueColor).toBe(defaultColor)
     expect(instance.generate).toHaveBeenCalled()
     expect(fsMockWriterFileSync).toHaveBeenCalled()
   })
@@ -430,7 +428,7 @@ describe('main', () => {
     expect(fsMockWriterFileSync).toHaveBeenCalled()
   })
 
-  it('runs with badge-icon github is set', async () => {
+  it('runs with badge-icon discord is set', async () => {
     coreMock.getInput.mockImplementation((name: string) => {
       switch (name) {
         case 'badge-type':

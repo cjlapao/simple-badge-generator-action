@@ -1,10 +1,7 @@
 import * as core from '@actions/core'
-import { measureText } from './helpers'
-import { readFileSync, writeFileSync, existsSync } from 'fs'
-import { XMLBuilder, XMLParser } from 'fast-xml-parser'
+import { writeFileSync, existsSync } from 'fs'
 import { Badge } from './badge'
-const font = 'Verdana,Geneva,DejaVu Sans,sans-serif'
-
+import { getCoberturaValue } from './cobertura'
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
@@ -12,7 +9,8 @@ const font = 'Verdana,Geneva,DejaVu Sans,sans-serif'
 export async function run(): Promise<void> {
   try {
     const badgePath = core.getInput('badge-path')
-    core.info(`Starting action ${badgePath}`)
+    const coberturaPath = core.getInput('cobertura-path')
+    core.info(`Starting generating badge ${badgePath}`)
 
     const badge = new Badge()
     if (core.getInput('badge-type')) {
@@ -128,16 +126,11 @@ export async function run(): Promise<void> {
         badge.value = core.getInput('value')
         break
       case 'cobertura':
-        const coberturaPath = core.getInput('cobertura-path')
         if (!existsSync(coberturaPath)) {
           core.setFailed(`File not found: ${coberturaPath}`)
           return
         }
-        const xmlData = readFileSync(coberturaPath, 'utf-8')
-        const parser = new XMLParser({ ignoreAttributes: false })
-        const coberturaValue = parser.parse(xmlData)
-        const lineRate = coberturaValue.coverage['@_line-rate'] * 100
-        badge.value = `${lineRate.toFixed(2)}`
+        badge.value = getCoberturaValue(coberturaPath)
         break
       case 'semaphore':
         badge.value = core.getInput('value')

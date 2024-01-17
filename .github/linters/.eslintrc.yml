@@ -16,7 +16,7 @@ ignorePatterns:
   - '**/__tests__/.*'
   - '*.json'
 
-parser: '@babel/eslint-parser'
+parser: '@typescript-eslint/parser'
 
 parserOptions:
   ecmaVersion: 2023
@@ -35,6 +35,8 @@ extends:
   - eslint:recommended
   - plugin:github/recommended
   - plugin:jest/recommended
+  - plugin:@typescript-eslint/eslint-recommended
+  - plugin:@typescript-eslint/recommended
 
 rules:
   {

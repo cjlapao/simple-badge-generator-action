@@ -38,12 +38,12 @@ export class Badge {
 
   generate(): string {
     let text = this.value
-    if (this.type == 'cobertura') {
+    if (this.type === 'cobertura') {
       text += '%'
     }
     let iconSize = 0
     let icon = ''
-    if (this.icon && this.icon != 'none') {
+    if (this.icon && this.icon !== 'none') {
       iconSize = 12
       switch (this.icon) {
         case 'github':
@@ -55,12 +55,12 @@ export class Badge {
       }
     }
 
-    const textSize = measureText(this.title, 'verdana', '12')
+    const textSize = measureText(this.title, 12)
     const textRectSize = textSize + 20 + iconSize
     const textX = textSize / 2 + 10 + iconSize
     const textY1 = 15
     const textY2 = 14
-    const valueSize = measureText(text, 'verdana', '12')
+    const valueSize = measureText(text, 12)
     let valueRectSize = valueSize + 20
     const valueX = textRectSize + valueSize / 2 + 10
     const valueY1 = textY1
@@ -69,24 +69,25 @@ export class Badge {
     let currentSteps = Math.round(parseFloat(this.value) / 10)
     const redSteps = Math.round(this.coberturaYellowThreshold / 10)
     const yellowSteps = Math.round((100 - this.coberturaGreenThreshold) / 10)
-    if (text == '') {
+    if (text === '') {
       badgeSize = textRectSize
       valueRectSize = 0
     }
 
-    if (this.valueFillColor == '') {
+    let coberturaColor = defaultValueFillColor
+    if (this.valueFillColor === '') {
       switch (this.type) {
         case 'boolean':
           if (
-            this.value.toLocaleUpperCase() == 'true' ||
-            this.value == 't' ||
-            this.value == '1' ||
-            this.value == 'yes' ||
-            this.value == 'y' ||
-            this.value == 'on' ||
-            this.value == 'enabled' ||
-            this.value == 'active' ||
-            this.value == 'success'
+            this.value.toLocaleUpperCase() === 'true' ||
+            this.value === 't' ||
+            this.value === '1' ||
+            this.value === 'yes' ||
+            this.value === 'y' ||
+            this.value === 'on' ||
+            this.value === 'enabled' ||
+            this.value === 'active' ||
+            this.value === 'success'
           ) {
             this.valueFillColor = greenColor
             if (this.booleanTrueColor) {
@@ -100,23 +101,26 @@ export class Badge {
           }
           break
         case 'cobertura':
-          let color = defaultValueFillColor
           if (parseFloat(this.value) < this.coberturaYellowThreshold) {
-            color = this.interpolateColor(redColor, yellowColor, redSteps)[
-              currentSteps
-            ]
+            coberturaColor = this.interpolateColor(
+              redColor,
+              yellowColor,
+              redSteps
+            )[currentSteps]
           } else if (
             parseFloat(this.value) >= this.coberturaYellowThreshold &&
             parseFloat(this.value) < this.coberturaGreenThreshold
           ) {
             currentSteps -= redSteps
-            color = this.interpolateColor(yellowColor, greenColor, yellowSteps)[
-              currentSteps
-            ]
+            coberturaColor = this.interpolateColor(
+              yellowColor,
+              greenColor,
+              yellowSteps
+            )[currentSteps]
           } else if (parseFloat(this.value) >= this.coberturaGreenThreshold) {
-            color = greenColor
+            coberturaColor = greenColor
           }
-          this.valueFillColor = color
+          this.valueFillColor = coberturaColor
           break
         case 'semaphore':
           if (
@@ -151,13 +155,13 @@ export class Badge {
       }
     }
     let roundness = 4
-    if (this.theme == 'flat-square' || this.theme == 'plastic-square') {
+    if (this.theme === 'flat-square' || this.theme === 'plastic-square') {
       roundness = 0
     }
 
     let svg = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${badgeSize}" height="20" role="img" aria-label="${this.title}: ${text}">\n`
     svg += `  <title>${this.title}: ${text}</title>\n`
-    if (this.theme == 'plastic' || this.theme == 'plastic-square') {
+    if (this.theme === 'plastic' || this.theme === 'plastic-square') {
       svg += `  <linearGradient id="s" x2="0" y2="100%">\n`
       svg += `    <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>\n`
       svg += `    <stop offset="1" stop-opacity=".1"/>\n`
@@ -171,7 +175,7 @@ export class Badge {
     if (text) {
       svg += `    <rect x="${textRectSize}" width="${valueRectSize}" height="20" fill="${this.valueFillColor}"/>\n`
     }
-    if (this.theme == 'plastic' || this.theme == 'plastic-square') {
+    if (this.theme === 'plastic' || this.theme === 'plastic-square') {
       svg += `    <rect width="${badgeSize}" height="20" fill="url(#s)"/>\n`
     }
     svg += `  </g>\n`
@@ -183,7 +187,7 @@ export class Badge {
       svg += `    <text x="${valueX}" y="${valueY2}" fill="${this.valueFontColor}" textLength="${valueSize}">${text}</text>\n`
     }
     svg += `  </g>\n`
-    if (this.icon && this.icon != 'none') {
+    if (this.icon && this.icon !== 'none') {
       svg += `  ${icon}\n`
     }
     svg += `</svg>\n`
@@ -210,7 +214,7 @@ export class Badge {
         })
         .join('')
 
-      interpolatedColors.push('#' + interpolatedColor)
+      interpolatedColors.push(`#${interpolatedColor}`)
     }
 
     return interpolatedColors
