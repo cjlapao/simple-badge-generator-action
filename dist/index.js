@@ -28838,12 +28838,12 @@ class Badge {
     }
     generate() {
         let text = this.value;
-        if (this.type == 'cobertura') {
+        if (this.type === 'cobertura') {
             text += '%';
         }
         let iconSize = 0;
         let icon = '';
-        if (this.icon && this.icon != 'none') {
+        if (this.icon && this.icon !== 'none') {
             iconSize = 12;
             switch (this.icon) {
                 case 'github':
@@ -28854,12 +28854,12 @@ class Badge {
                     break;
             }
         }
-        const textSize = (0, helpers_1.measureText)(this.title, 'verdana', '12');
+        const textSize = (0, helpers_1.measureText)(this.title, 12);
         const textRectSize = textSize + 20 + iconSize;
         const textX = textSize / 2 + 10 + iconSize;
         const textY1 = 15;
         const textY2 = 14;
-        const valueSize = (0, helpers_1.measureText)(text, 'verdana', '12');
+        const valueSize = (0, helpers_1.measureText)(text, 12);
         let valueRectSize = valueSize + 20;
         const valueX = textRectSize + valueSize / 2 + 10;
         const valueY1 = textY1;
@@ -28868,22 +28868,23 @@ class Badge {
         let currentSteps = Math.round(parseFloat(this.value) / 10);
         const redSteps = Math.round(this.coberturaYellowThreshold / 10);
         const yellowSteps = Math.round((100 - this.coberturaGreenThreshold) / 10);
-        if (text == '') {
+        if (text === '') {
             badgeSize = textRectSize;
             valueRectSize = 0;
         }
-        if (this.valueFillColor == '') {
+        let coberturaColor = defaultValueFillColor;
+        if (this.valueFillColor === '') {
             switch (this.type) {
                 case 'boolean':
-                    if (this.value.toLocaleUpperCase() == 'true' ||
-                        this.value == 't' ||
-                        this.value == '1' ||
-                        this.value == 'yes' ||
-                        this.value == 'y' ||
-                        this.value == 'on' ||
-                        this.value == 'enabled' ||
-                        this.value == 'active' ||
-                        this.value == 'success') {
+                    if (this.value.toLocaleLowerCase() === 'true' ||
+                        this.value.toLocaleLowerCase() === 't' ||
+                        this.value.toLocaleLowerCase() === '1' ||
+                        this.value.toLocaleLowerCase() === 'yes' ||
+                        this.value.toLocaleLowerCase() === 'y' ||
+                        this.value.toLocaleLowerCase() === 'on' ||
+                        this.value.toLocaleLowerCase() === 'enabled' ||
+                        this.value.toLocaleLowerCase() === 'active' ||
+                        this.value.toLocaleLowerCase() === 'success') {
                         this.valueFillColor = greenColor;
                         if (this.booleanTrueColor) {
                             this.valueFillColor = this.booleanTrueColor;
@@ -28897,19 +28898,18 @@ class Badge {
                     }
                     break;
                 case 'cobertura':
-                    let color = defaultValueFillColor;
                     if (parseFloat(this.value) < this.coberturaYellowThreshold) {
-                        color = this.interpolateColor(redColor, yellowColor, redSteps)[currentSteps];
+                        coberturaColor = this.interpolateColor(redColor, yellowColor, redSteps)[currentSteps];
                     }
                     else if (parseFloat(this.value) >= this.coberturaYellowThreshold &&
                         parseFloat(this.value) < this.coberturaGreenThreshold) {
                         currentSteps -= redSteps;
-                        color = this.interpolateColor(yellowColor, greenColor, yellowSteps)[currentSteps];
+                        coberturaColor = this.interpolateColor(yellowColor, greenColor, yellowSteps)[currentSteps];
                     }
                     else if (parseFloat(this.value) >= this.coberturaGreenThreshold) {
-                        color = greenColor;
+                        coberturaColor = greenColor;
                     }
-                    this.valueFillColor = color;
+                    this.valueFillColor = coberturaColor;
                     break;
                 case 'semaphore':
                     if (this.value.toLocaleLowerCase() ===
@@ -28940,12 +28940,12 @@ class Badge {
             }
         }
         let roundness = 4;
-        if (this.theme == 'flat-square' || this.theme == 'plastic-square') {
+        if (this.theme === 'flat-square' || this.theme === 'plastic-square') {
             roundness = 0;
         }
         let svg = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${badgeSize}" height="20" role="img" aria-label="${this.title}: ${text}">\n`;
         svg += `  <title>${this.title}: ${text}</title>\n`;
-        if (this.theme == 'plastic' || this.theme == 'plastic-square') {
+        if (this.theme === 'plastic' || this.theme === 'plastic-square') {
             svg += `  <linearGradient id="s" x2="0" y2="100%">\n`;
             svg += `    <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>\n`;
             svg += `    <stop offset="1" stop-opacity=".1"/>\n`;
@@ -28959,7 +28959,7 @@ class Badge {
         if (text) {
             svg += `    <rect x="${textRectSize}" width="${valueRectSize}" height="20" fill="${this.valueFillColor}"/>\n`;
         }
-        if (this.theme == 'plastic' || this.theme == 'plastic-square') {
+        if (this.theme === 'plastic' || this.theme === 'plastic-square') {
             svg += `    <rect width="${badgeSize}" height="20" fill="url(#s)"/>\n`;
         }
         svg += `  </g>\n`;
@@ -28971,7 +28971,7 @@ class Badge {
             svg += `    <text x="${valueX}" y="${valueY2}" fill="${this.valueFontColor}" textLength="${valueSize}">${text}</text>\n`;
         }
         svg += `  </g>\n`;
-        if (this.icon && this.icon != 'none') {
+        if (this.icon && this.icon !== 'none') {
             svg += `  ${icon}\n`;
         }
         svg += `</svg>\n`;
@@ -28993,12 +28993,33 @@ class Badge {
                 return Math.round(stepValue).toString(16).padStart(2, '0');
             })
                 .join('');
-            interpolatedColors.push('#' + interpolatedColor);
+            interpolatedColors.push(`#${interpolatedColor}`);
         }
         return interpolatedColors;
     }
 }
 exports.Badge = Badge;
+
+
+/***/ }),
+
+/***/ 6170:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getCoberturaValue = void 0;
+const fs_1 = __nccwpck_require__(7147);
+const fast_xml_parser_1 = __nccwpck_require__(2603);
+function getCoberturaValue(coberturaPath) {
+    const xmlData = (0, fs_1.readFileSync)(coberturaPath, 'utf-8');
+    const parser = new fast_xml_parser_1.XMLParser({ ignoreAttributes: false });
+    const coberturaValue = parser.parse(xmlData);
+    const lineRate = coberturaValue.coverage['@_line-rate'] * 100;
+    return lineRate.toFixed(2);
+}
+exports.getCoberturaValue = getCoberturaValue;
 
 
 /***/ }),
@@ -29010,9 +29031,9 @@ exports.Badge = Badge;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.measureText = void 0;
-function measureText(text, fontFamily, fontSize) {
-    var pixelWith = __nccwpck_require__(7070);
-    let width = pixelWith(text, { font: fontFamily, size: fontSize });
+const pixelWith = __nccwpck_require__(7070);
+function measureText(text, fontSize) {
+    const width = pixelWith(text, { font: 'verdana', size: fontSize });
     return width;
 }
 exports.measureText = measureText;
@@ -29052,9 +29073,8 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.run = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const fs_1 = __nccwpck_require__(7147);
-const fast_xml_parser_1 = __nccwpck_require__(2603);
 const badge_1 = __nccwpck_require__(3128);
-const font = 'Verdana,Geneva,DejaVu Sans,sans-serif';
+const cobertura_1 = __nccwpck_require__(6170);
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
@@ -29062,7 +29082,8 @@ const font = 'Verdana,Geneva,DejaVu Sans,sans-serif';
 async function run() {
     try {
         const badgePath = core.getInput('badge-path');
-        core.info(`Starting action ${badgePath}`);
+        const coberturaPath = core.getInput('cobertura-path');
+        core.info(`Starting generating badge ${badgePath}`);
         const badge = new badge_1.Badge();
         if (core.getInput('badge-type')) {
             switch (core.getInput('badge-type')) {
@@ -29173,22 +29194,17 @@ async function run() {
                 badge.value = core.getInput('value');
                 break;
             case 'cobertura':
-                const coberturaPath = core.getInput('cobertura-path');
                 if (!(0, fs_1.existsSync)(coberturaPath)) {
                     core.setFailed(`File not found: ${coberturaPath}`);
                     return;
                 }
-                const xmlData = (0, fs_1.readFileSync)(coberturaPath, 'utf-8');
-                const parser = new fast_xml_parser_1.XMLParser({ ignoreAttributes: false });
-                const coberturaValue = parser.parse(xmlData);
-                const lineRate = coberturaValue.coverage['@_line-rate'] * 100;
-                badge.value = `${lineRate.toFixed(2)}`;
+                badge.value = (0, cobertura_1.getCoberturaValue)(coberturaPath);
                 break;
             case 'semaphore':
                 badge.value = core.getInput('value');
                 break;
         }
-        (0, fs_1.writeFileSync)('./.local/output.svg', badge.generate(), 'utf-8');
+        (0, fs_1.writeFileSync)(badgePath, badge.generate(), 'utf-8');
     }
     catch (error) {
         // Fail the workflow run if an error occurs
