@@ -22,6 +22,7 @@ parserOptions:
   ecmaVersion: 2023
   sourceType: module
   requireConfigFile: false
+  project: 'tsconfig.eslint.json'
   babelOptions:
     babelrc: false
     configFile: false
@@ -49,5 +50,6 @@ rules:
     'no-console': 'off',
     'no-unused-vars': 'off',
     'prettier/prettier': 'error',
-    'semi': 'off'
+    'semi': 'off',
+    'space-before-function-paren': 0,
   }

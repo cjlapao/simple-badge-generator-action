@@ -19,7 +19,11 @@
   "exclude": [
     "./dist",
     "./node_modules",
-    "./__tests__",
     "./coverage"
-  ]
+  ],
+  "ts-standard": {
+    "ignore": [
+      "./__tests__",
+    ]
+  }
 }
