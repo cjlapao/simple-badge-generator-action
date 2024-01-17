@@ -4,7 +4,8 @@ MD004:
 
 # Ordered list item prefix
 MD029:
-  style: one
+  style: ordered
 
+# Ignore tables for MD013
 MD013:
   tables: false

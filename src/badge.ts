@@ -162,15 +162,15 @@ export class Badge {
     let svg = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${badgeSize}" height="20" role="img" aria-label="${this.title}: ${text}">\n`
     svg += `  <title>${this.title}: ${text}</title>\n`
     if (this.theme === 'plastic' || this.theme === 'plastic-square') {
-      svg += `  <linearGradient id="s" x2="0" y2="100%">\n`
-      svg += `    <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>\n`
-      svg += `    <stop offset="1" stop-opacity=".1"/>\n`
-      svg += `  </linearGradient>\n`
+      svg += '  <linearGradient id="s" x2="0" y2="100%">\n'
+      svg += '    <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>\n'
+      svg += '    <stop offset="1" stop-opacity=".1"/>\n'
+      svg += '  </linearGradient>\n'
     }
-    svg += `  <clipPath id="r">\n`
+    svg += '  <clipPath id="r">\n'
     svg += `    <rect width="${badgeSize}" height="20" rx="${roundness}" fill="#fff"/>\n`
-    svg += `  </clipPath>\n`
-    svg += `  <g clip-path="url(#r)">\n`
+    svg += '  </clipPath>\n'
+    svg += '  <g clip-path="url(#r)">\n'
     svg += `    <rect width="${textRectSize}" height="20" fill="${this.titleFillColor}"/>\n`
     if (text) {
       svg += `    <rect x="${textRectSize}" width="${valueRectSize}" height="20" fill="${this.valueFillColor}"/>\n`
@@ -178,19 +178,20 @@ export class Badge {
     if (this.theme === 'plastic' || this.theme === 'plastic-square') {
       svg += `    <rect width="${badgeSize}" height="20" fill="url(#s)"/>\n`
     }
-    svg += `  </g>\n`
-    svg += `  <g fill="#fff" text-anchor="middle" font-family="Verdana" text-rendering="geometricPrecision" font-size="11">\n`
+    svg += '  </g>\n'
+    svg +=
+      '  <g fill="#fff" text-anchor="middle" font-family="Verdana" text-rendering="geometricPrecision" font-size="11">\n'
     svg += `    <text aria-hidden="true" x="${textX}" y="${textY1}" fill="#010101" fill-opacity=".3" textLength="${textSize}">${this.title}</text>\n`
     svg += `    <text x="${textX}" y="${textY2}" fill="${this.titleFontColor}" textLength="${textSize}">${this.title}</text>\n`
     if (text) {
       svg += `    <text x="${valueX}" y="${valueY1}" textLength="${valueSize}" fill="#010101" fill-opacity=".3">${text}</text>\n`
       svg += `    <text x="${valueX}" y="${valueY2}" fill="${this.valueFontColor}" textLength="${valueSize}">${text}</text>\n`
     }
-    svg += `  </g>\n`
+    svg += '  </g>\n'
     if (this.icon && this.icon !== 'none') {
       svg += `  ${icon}\n`
     }
-    svg += `</svg>\n`
+    svg += '</svg>\n'
 
     return svg
   }

@@ -19,7 +19,6 @@
   "exclude": [
     "./dist",
     "./node_modules",
-    "__tests__",
     "./coverage"
   ],
 }

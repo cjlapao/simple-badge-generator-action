@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   test-javascript:
-    name: JavaScript Tests
+    name: Typescript Tests
     runs-on: ubuntu-latest
 
     steps:
