@@ -29005,19 +29005,46 @@ exports.Badge = Badge;
 /***/ }),
 
 /***/ 6170:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
 
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getCoberturaValue = void 0;
 const fs_1 = __nccwpck_require__(7147);
 const fast_xml_parser_1 = __nccwpck_require__(2603);
+const core = __importStar(__nccwpck_require__(2186));
 function getCoberturaValue(coberturaPath) {
+    core.info(`Reading cobertura file ${coberturaPath}`);
     const xmlData = (0, fs_1.readFileSync)(coberturaPath, 'utf-8');
+    core.info(`Parsing cobertura file ${coberturaPath}`);
     const parser = new fast_xml_parser_1.XMLParser({ ignoreAttributes: false });
     const coberturaValue = parser.parse(xmlData);
     const lineRate = coberturaValue.coverage['@_line-rate'] * 100;
+    core.info(`Cobertura value ${lineRate}`);
     return lineRate.toFixed(2);
 }
 exports.getCoberturaValue = getCoberturaValue;
