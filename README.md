@@ -125,7 +125,7 @@ We allow a couple of themes to be used for the badges.
 | `value-font-color`                 | The font color of the value                               | `#fff`    |
 | `badge-icon`                       | The icon of the badge                                     | `none`    |
 | `cobertura-path`                   | The path to the cobertura xml report                      |           |
-| `cobertura-color-yellow-threshold` | The threshold to use for the cobertura badge yellow color | `50`      |
+| `cobertura-color-yellow-threshold` | The threshold to use for the cobertura badge yellow color | `40`      |
 | `cobertura-color-green-threshold`  | The threshold to use for the cobertura badge green color  | `80`      |
 | `semaphore-red-value`              | The value to use for the semaphore badge red color        |           |
 | `semaphore-red-color`              | The color to use for the semaphore badge red color        | `#c21d03` |
