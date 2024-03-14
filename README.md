@@ -21,7 +21,7 @@ for simple badges you can use the following syntax:
 
 ```yaml
 steps:
-  - uses: actions/checkout@v2
+  - uses: actions/checkout@v4
   - uses: cjlapao/simple-badge-generator-action@v1
     with:
       badge-path: './license.svg'
@@ -34,10 +34,11 @@ for cobertura badges you can use the following syntax:
 
 ```yaml
 steps:
-  - uses: actions/checkout@v2
-  - uses: cjlapao/setup-flutter@v1
+  - uses: actions/checkout@v4
+  - uses: cjlapao/simple-badge-generator-action@v1
     with:
       badge-path: './license.svg'
+      badge-type: 'cobertura'
       title: 'Coverage'
       cobertura-path: './cobertura-coverage.xml'
 ```
