@@ -76,7 +76,7 @@
         "@actions/tool-cache": "^2.0.1",
         "axios": "^1.7.2",
         "fast-xml-parser": "^4.3.6",
-        "jsdom": "^24.0.0",
+        "jsdom": "^24.1.0",
         "lodash": "^4.17.21",
         "string-pixel-width": "^1.11.0",
         "textlint-filter-rule-allowlist": "^4.0.0"
