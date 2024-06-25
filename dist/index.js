@@ -29258,7 +29258,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getCoberturaValue = void 0;
+exports.getCoberturaValue = getCoberturaValue;
 const fs_1 = __nccwpck_require__(7147);
 const fast_xml_parser_1 = __nccwpck_require__(2603);
 const core = __importStar(__nccwpck_require__(2186));
@@ -29272,7 +29272,6 @@ function getCoberturaValue(coberturaPath) {
     core.info(`Cobertura value ${lineRate}`);
     return lineRate.toFixed(2);
 }
-exports.getCoberturaValue = getCoberturaValue;
 
 
 /***/ }),
@@ -29283,13 +29282,12 @@ exports.getCoberturaValue = getCoberturaValue;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.measureText = void 0;
+exports.measureText = measureText;
 const pixelWith = __nccwpck_require__(7070);
 function measureText(text, fontSize) {
     const width = pixelWith(text, { font: 'verdana', size: fontSize });
     return width;
 }
-exports.measureText = measureText;
 
 
 /***/ }),
@@ -29323,7 +29321,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.run = void 0;
+exports.run = run;
 const core = __importStar(__nccwpck_require__(2186));
 const fs_1 = __nccwpck_require__(7147);
 const badge_1 = __nccwpck_require__(3128);
@@ -29465,7 +29463,6 @@ async function run() {
             core.setFailed(error.message);
     }
 }
-exports.run = run;
 
 
 /***/ }),
