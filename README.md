@@ -1,4 +1,4 @@
-# Generates simple badges for GitHub actions
+# Generates simple badges for GitHub Actions
 
 ![coverage](https://raw.githubusercontent.com/cjlapao/simple-badge-generator-action/main/badges/coverage.svg)
 [![Lint Codebase](https://github.com/cjlapao/simple-badge-generator-action/actions/workflows/linter.yml/badge.svg)](https://github.com/cjlapao/simple-badge-generator-action/actions/workflows/linter.yml)
