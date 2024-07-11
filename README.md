@@ -1,4 +1,4 @@
-# Generates simple badges for GitHub actions
+# Generates simple badges for GitHub Actions
 
 ![coverage](https://raw.githubusercontent.com/cjlapao/simple-badge-generator-action/main/badges/coverage.svg)
 [![Lint Codebase](https://github.com/cjlapao/simple-badge-generator-action/actions/workflows/linter.yml/badge.svg)](https://github.com/cjlapao/simple-badge-generator-action/actions/workflows/linter.yml)
@@ -13,7 +13,7 @@ for example a simple badge could be something like this:
 or a more elaborated one like this:  
 ![coverage](./img/cobertura.svg)  
 where the coverage is automatically calculated and the color is automatically
-selected based on the coverage percentage based on a cobertura xml report.
+selected based on the coverage percentage based on a cobertura XML report.
 
 ## Usage
 
@@ -65,7 +65,7 @@ Examples:
 
 ### Cobertura
 
-This badge takes in a cobertura xml report and calculates the coverage percentage
+This badge takes in a cobertura XML report and calculates the coverage percentage
 and generates a badge with the coverage percentage and a color based on the
 coverage percentage. the colors will be gradient from red to yellow to green
 depending on the threshold values.
@@ -125,7 +125,7 @@ We allow a couple of themes to be used for the badges.
 | `value-fill-color`                 | The background color of the value                         | `#576C87` |
 | `value-font-color`                 | The font color of the value                               | `#fff`    |
 | `badge-icon`                       | The icon of the badge                                     | `none`    |
-| `cobertura-path`                   | The path to the cobertura xml report                      |           |
+| `cobertura-path`                   | The path to the cobertura XML report                      |           |
 | `cobertura-color-yellow-threshold` | The threshold to use for the cobertura badge yellow color | `40`      |
 | `cobertura-color-green-threshold`  | The threshold to use for the cobertura badge green color  | `80`      |
 | `semaphore-red-value`              | The value to use for the semaphore badge red color        |           |
