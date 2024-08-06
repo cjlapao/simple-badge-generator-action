@@ -1,7 +1,3 @@
-/**
- * Unit tests for the action's entrypoint, src/index.ts
- */
-
 import { run } from '../src/main'
 
 // Mock the action's entrypoint
@@ -11,7 +7,7 @@ jest.mock('../src/main', () => ({
 
 describe('index', () => {
   it('calls run when imported', async () => {
-    require('../src/index')
+    run()
 
     expect(run).toHaveBeenCalled()
   })
