@@ -4,9 +4,9 @@
 [![Lint Codebase](https://github.com/cjlapao/simple-badge-generator-action/actions/workflows/linter.yml/badge.svg)](https://github.com/cjlapao/simple-badge-generator-action/actions/workflows/linter.yml)
 [![CI](https://github.com/cjlapao/simple-badge-generator-action/actions/workflows/ci.yml/badge.svg)](https://github.com/cjlapao/simple-badge-generator-action/actions/workflows/ci.yml)
 
-This action generates simple badges for flutter projects with some advanced features.
-You can simple create badges with an icon and text or more elaborated ones like
-boolean badges, semaphores and cobertura coverage ones.
+This action generates simple badges for flutter projects with some advanced
+features. You can simple create badges with an icon and text or more elaborated
+ones like boolean badges, semaphores and cobertura coverage ones.
 
 for example a simple badge could be something like this:  
 ![github actions](./img/github_actions.svg)  
@@ -43,15 +43,16 @@ steps:
       cobertura-path: './cobertura-coverage.xml'
 ```
 
-there are a lot more possible combinations, see the reference below for more information.
+there are a lot more possible combinations, see the reference below for more
+information.
 
 ## Badge Types
 
 | Name        | Description                                                                           |
-|-------------|---------------------------------------------------------------------------------------|
+| ----------- | ------------------------------------------------------------------------------------- |
 | `simple`    | A simple badge with a title and a value                                               |
 | `cobertura` | A badge that uses the cobertura coverage report to generate the badge color and value |
-| `semaphore` | A badge that uses a *semaphore* style logic to generate the badge color               |
+| `semaphore` | A badge that uses a _semaphore_ style logic to generate the badge color               |
 | `boolean`   | A badge that uses a boolean value to generate the badge color                         |
 
 ### Simple
@@ -65,29 +66,30 @@ Examples:
 
 ### Cobertura
 
-This badge takes in a cobertura XML report and calculates the coverage percentage
-and generates a badge with the coverage percentage and a color based on the
-coverage percentage. the colors will be gradient from red to yellow to green
-depending on the threshold values.
+This badge takes in a cobertura XML report and calculates the coverage
+percentage and generates a badge with the coverage percentage and a color based
+on the coverage percentage. the colors will be gradient from red to yellow to
+green depending on the threshold values.
 
 Examples:  
 ![cobertura](./img/cobertura.svg)  
 ![cobertura](./img/cobertura_yellow.svg)  
-![cobertura](./img/cobertura_red.svg)  
+![cobertura](./img/cobertura_red.svg)
 
 ### Semaphore
 
 This badge takes in three possible values for each of the colors, red, yellow
 and green. then it will generate a badge with the color based on the value that
-is passed in, if none is matched then it renders it with the default color.
-you can also personalize the values for each of the colors.
+is passed in, if none is matched then it renders it with the default color. you
+can also personalize the values for each of the colors.
 
 ### Boolean
 
 Very similar to the semaphore badge but it only has two possible values, true or
 false. The value needs to be a boolean value and it will generate a badge with
 the color based on the value that is passed in, if none is matched then it
-renders it with the default color. it will accept a range of possible true values:
+renders it with the default color. it will accept a range of possible true
+values:
 
 - `true`
 - `t`
@@ -106,7 +108,7 @@ renders it with the default color. it will accept a range of possible true value
 We allow a couple of themes to be used for the badges.
 
 | Name             | Description                                     | Example                                     |
-|------------------|-------------------------------------------------|---------------------------------------------|
+| ---------------- | ----------------------------------------------- | ------------------------------------------- |
 | `flat`           | A flat theme                                    | ![flat](./img/flat.svg)                     |
 | `flat-square`    | A flat theme but with square corners            | ![flat-square](./img/flat-square.svg)       |
 | `plastic`        | A plastic theme that has a volume feeling to it | ![plastic](./img/plastic.svg)               |
@@ -115,7 +117,7 @@ We allow a couple of themes to be used for the badges.
 ## Options
 
 | Name                               | Description                                               | Default   |
-|------------------------------------|-----------------------------------------------------------|-----------|
+| ---------------------------------- | --------------------------------------------------------- | --------- |
 | `badge-type`                       | The type of badge to generate                             | `simple`  |
 | `badge-path`                       | The path where the generated badge will be saved          |           |
 | `title`                            | The title of the badge, if none is supplied it will fail  |           |
@@ -140,5 +142,5 @@ We allow a couple of themes to be used for the badges.
 ## Outputs
 
 | Name         | Description                                      |
-|--------------|--------------------------------------------------|
+| ------------ | ------------------------------------------------ |
 | `badge-path` | The path where the generated badge will be saved |
