@@ -81,6 +81,7 @@
     "string-pixel-width": "^1.11.0",
     "textlint-filter-rule-allowlist": "^4.0.0"
   },
+  
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@babel/eslint-parser": "^7.25.1",
