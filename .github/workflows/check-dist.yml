@@ -20,6 +20,9 @@ permissions:
 
 jobs:
   check-dist:
+    if:
+      github.event_name == 'pull_request' && !contains(github.head_ref,
+      'release/')
     name: Check dist/
     runs-on: ubuntu-latest
 
@@ -49,7 +52,9 @@ jobs:
 
       # This will fail the workflow if the PR wasn't created by Dependabot.
       - name: Compare Directories
-        if: github.actor != 'dependabot[bot]'
+        if:
+          github.event_name == 'pull_request' && !contains(github.head_ref,
+          'dependabot/')
         id: diff
         run: |
           if [ "$(git diff --ignore-space-at-eol --text dist/ | wc -l)" -gt "0" ]; then
