@@ -42,7 +42,7 @@
   },
   "license": "MIT",
   "eslintConfig": {
-    "extends": "./.github/linters/.eslintrc.yaml"
+    "extends": "./.github/linters/eslint.config.mjs"
   },
   "jest": {
     "verbose": true,
