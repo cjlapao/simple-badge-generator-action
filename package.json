@@ -26,12 +26,15 @@
   "engines": {
     "node": ">=20"
   },
+  "eslintIgnore": [
+    "dist/*"
+  ],
   "scripts": {
     "bundle": "npm run format:write && npm run package",
     "ci-test": "jest --runInBand",
     "format:write": "prettier --write **/*.ts",
     "format:check": "prettier --check **/*.ts",
-    "lint": "npx eslint . -c ./.github/linters/.eslintrc.yaml",
+    "lint": "npx eslint . -c ./.github/linters/eslint.config.mjs",
     "package": "ncc build src/index.ts --license licenses.txt",
     "package:watch": "npm run package -- --watch",
     "test": "(jest && make-coverage-badge --output-path ./badges/coverage.svg) || make-coverage-badge --output-path ./badges/coverage.svg",
