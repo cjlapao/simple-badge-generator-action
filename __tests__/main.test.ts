@@ -10,7 +10,6 @@ jest.mock('@actions/core')
 describe('main', () => {
   const badgeMock = jest.mocked(Badge, { shallow: false })
   const coreMock = jest.mocked(core, { shallow: false })
-  let existsSyncMock: jest.SpiedFunction<typeof fs.existsSync>
   const fsMockWriterFileSync = jest.spyOn(fs, 'writeFileSync')
 
   beforeEach(() => {
