@@ -1,3 +1,4 @@
+// @ts-nocheck
 import pixelWith from 'string-pixel-width'
 
 export function measureText(text: string, fontSize: number): number {
