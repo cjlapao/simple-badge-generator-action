@@ -80,6 +80,7 @@ export default [
       'prettier/prettier': 'error',
       semi: 'off',
       '@typescript-eslint/space-before-function-paren': 'off',
+      '@typescript-eslint/ban-ts-comment': 'off',
       'no-shadow': 'off',
       '@typescript-eslint/restrict-template-expressions': 'off'
     }
