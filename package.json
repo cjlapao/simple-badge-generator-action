@@ -41,9 +41,6 @@
     "all": "npm run format:write && npm run lint && npm run test && npm run package"
   },
   "license": "MIT",
-  "eslintConfig": {
-    "extends": "./.github/linters/.eslintrc.yaml"
-  },
   "jest": {
     "verbose": true,
     "clearMocks": true,
@@ -78,7 +75,7 @@
     "@actions/http-client": "^2.2.3",
     "@actions/tool-cache": "^2.0.2",
     "axios": "^1.7.9",
-    "fast-xml-parser": "^4.5.1",
+    "fast-xml-parser": "^5.0.8",
     "jsdom": "^26.0.0",
     "lodash": "^4.17.21",
     "string-pixel-width": "^1.11.0",
