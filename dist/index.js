@@ -30069,6 +30069,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.measureText = measureText;
+// @ts-nocheck
 const string_pixel_width_1 = __importDefault(__nccwpck_require__(2009));
 function measureText(text, fontSize) {
     const width = (0, string_pixel_width_1.default)(text, { font: 'verdana', size: fontSize });
