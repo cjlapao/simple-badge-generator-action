@@ -66,4 +66,5 @@ jobs:
         id: output
         run: echo "${STEPS_TEST_ACTION_OUTPUTS_BADGE_PATH}"
         env:
-          STEPS_TEST_ACTION_OUTPUTS_BADGE_PATH: ${{ steps.test-action.outputs.badge-path }}
+          STEPS_TEST_ACTION_OUTPUTS_BADGE_PATH:
+            ${{ steps.test-action.outputs.badge-path }}
