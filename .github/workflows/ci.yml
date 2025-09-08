@@ -18,6 +18,8 @@ jobs:
       - name: Checkout
         id: checkout
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Setup Node.js
         id: setup-node
@@ -50,6 +52,8 @@ jobs:
       - name: Checkout
         id: checkout
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Test Local Action
         id: test-action
@@ -60,4 +64,7 @@ jobs:
 
       - name: Print Output
         id: output
-        run: echo "${{ steps.test-action.outputs.badge-path }}"
+        run: echo "${STEPS_TEST_ACTION_OUTPUTS_BADGE_PATH}"
+        env:
+          STEPS_TEST_ACTION_OUTPUTS_BADGE_PATH:
+            ${{ steps.test-action.outputs.badge-path }}
