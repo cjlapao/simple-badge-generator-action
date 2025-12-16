@@ -89,7 +89,7 @@
     "@types/jsdom": "^27.0.0",
     "@types/node": "^24.10.1",
     "@types/string-pixel-width": "^1.11.0",
-    "@typescript-eslint/eslint-plugin": "^8.48.0",
+    "@typescript-eslint/eslint-plugin": "^8.49.0",
     "@vercel/ncc": "^0.38.4",
     "babel-preset-jest": "^30.2.0",
     "eslint": "^9.39.1",
@@ -97,7 +97,7 @@
     "eslint-plugin-prettier": "^5.5.4",
     "jest": "^30.2.0",
     "make-coverage-badge": "^1.2.0",
-    "prettier": "^3.7.3",
+    "prettier": "^3.7.4",
     "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
