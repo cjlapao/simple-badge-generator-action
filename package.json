@@ -75,7 +75,7 @@
     "@actions/http-client": "^3.0.0",
     "@actions/tool-cache": "^3.0.0",
     "axios": "^1.13.2",
-    "fast-xml-parser": "^5.3.3",
+    "fast-xml-parser": "^5.3.4",
     "jsdom": "^27.4.0",
     "lodash": "^4.17.23",
     "string-pixel-width": "^1.11.0",
