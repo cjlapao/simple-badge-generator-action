@@ -70,7 +70,7 @@
     ]
   },
   "dependencies": {
-    "@actions/core": "^2.0.2",
+    "@actions/core": "^3.0.0",
     "@actions/exec": "^3.0.0",
     "@actions/http-client": "^4.0.0",
     "@actions/tool-cache": "^4.0.0",
