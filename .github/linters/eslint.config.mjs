@@ -58,13 +58,7 @@ export default [
 
       parserOptions: {
         requireConfigFile: false,
-        project: 'tsconfig.eslint.json',
-
-        babelOptions: {
-          babelrc: false,
-          configFile: false,
-          presets: ['jest']
-        }
+        project: 'tsconfig.eslint.json'
       }
     },
 

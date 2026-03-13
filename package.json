@@ -35,8 +35,8 @@
     "format:write": "prettier --write **/*.ts",
     "format:check": "prettier --check **/*.ts",
     "lint": "npx eslint . -c ./.github/linters/eslint.config.mjs",
-    "package": "ncc build src/index.ts --license licenses.txt",
-    "package:watch": "npm run package -- --watch",
+    "package": "tsup && generate-license-file --input package.json --output dist/licenses.txt --overwrite",
+    "package:watch": "tsup --watch",
     "test": "(jest && make-coverage-badge --output-path ./badges/coverage.svg) || make-coverage-badge --output-path ./badges/coverage.svg",
     "all": "npm run format:write && npm run lint && npm run test && npm run package"
   },
@@ -56,6 +56,9 @@
       "/node_modules/",
       "/dist/"
     ],
+    "moduleNameMapper": {
+      "^@actions/core$": "<rootDir>/__tests__/mocks/actions-core.ts"
+    },
     "transform": {
       "^.+\\.ts$": "ts-jest"
     },
@@ -100,7 +103,9 @@
     "prettier": "^3.8.1",
     "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "tsup": "^8.5.0",
+    "generate-license-file": "^4.1.1"
   },
   "overrides": {
     "diff": "8.0.3",
