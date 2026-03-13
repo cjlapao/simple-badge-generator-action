@@ -23,7 +23,7 @@ describe('main', () => {
 
     expect(badgeMock).toHaveBeenCalledWith()
     const instance = badgeMock.mock.instances[0]
-    expect(instance.title).toBeUndefined()
+    expect(instance.title).toBe('')
     expect(instance.type).toBe('simple')
     expect(instance.generate).not.toHaveBeenCalled()
     expect(coreMock.setFailed).toHaveBeenCalledWith('Title is required')
