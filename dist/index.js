@@ -26594,7 +26594,7 @@ function validateAttributeString(attrStr, options) {
     if (!validateAttrName(attrName)) {
       return getErrorObject("InvalidAttr", "Attribute '" + attrName + "' is an invalid name.", getPositionFromMatch(matches[i]));
     }
-    if (!attrNames.hasOwnProperty(attrName)) {
+    if (!Object.prototype.hasOwnProperty.call(attrNames, attrName)) {
       attrNames[attrName] = 1;
     } else {
       return getErrorObject("InvalidAttr", "Attribute '" + attrName + "' is repeated.", getPositionFromMatch(matches[i]));
@@ -26706,10 +26706,40 @@ var defaultOptions2 = {
     return tagName;
   },
   // skipEmptyListItem: false
-  captureMetaData: false
+  captureMetaData: false,
+  maxNestedTags: 100
 };
+function normalizeProcessEntities(value) {
+  if (typeof value === "boolean") {
+    return {
+      enabled: value,
+      // true or false
+      maxEntitySize: 1e4,
+      maxExpansionDepth: 10,
+      maxTotalExpansions: 1e3,
+      maxExpandedLength: 1e5,
+      allowedTags: null,
+      tagFilter: null
+    };
+  }
+  if (typeof value === "object" && value !== null) {
+    return {
+      enabled: value.enabled !== false,
+      // default true if not specified
+      maxEntitySize: value.maxEntitySize ?? 1e4,
+      maxExpansionDepth: value.maxExpansionDepth ?? 10,
+      maxTotalExpansions: value.maxTotalExpansions ?? 1e3,
+      maxExpandedLength: value.maxExpandedLength ?? 1e5,
+      allowedTags: value.allowedTags ?? null,
+      tagFilter: value.tagFilter ?? null
+    };
+  }
+  return normalizeProcessEntities(true);
+}
 var buildOptions = function(options) {
-  return Object.assign({}, defaultOptions2, options);
+  const built = Object.assign({}, defaultOptions2, options);
+  built.processEntities = normalizeProcessEntities(built.processEntities);
+  return built;
 };
 
 // node_modules/fast-xml-parser/src/xmlparser/xmlNode.js
@@ -26723,7 +26753,7 @@ var XmlNode = class {
   constructor(tagname) {
     this.tagname = tagname;
     this.child = [];
-    this[":@"] = {};
+    this[":@"] = /* @__PURE__ */ Object.create(null);
   }
   add(key, val) {
     if (key === "__proto__") key = "#__proto__";
@@ -26748,11 +26778,12 @@ var XmlNode = class {
 
 // node_modules/fast-xml-parser/src/xmlparser/DocTypeReader.js
 var DocTypeReader = class {
-  constructor(processEntities) {
-    this.suppressValidationErr = !processEntities;
+  constructor(options) {
+    this.suppressValidationErr = !options;
+    this.options = options;
   }
   readDocType(xmlData, i) {
-    const entities = {};
+    const entities = /* @__PURE__ */ Object.create(null);
     if (xmlData[i + 3] === "O" && xmlData[i + 4] === "C" && xmlData[i + 5] === "T" && xmlData[i + 6] === "Y" && xmlData[i + 7] === "P" && xmlData[i + 8] === "E") {
       i = i + 9;
       let angleBracketsCount = 1;
@@ -26829,6 +26860,11 @@ var DocTypeReader = class {
     }
     let entityValue = "";
     [i, entityValue] = this.readIdentifierVal(xmlData, i, "entity");
+    if (this.options.enabled !== false && this.options.maxEntitySize && entityValue.length > this.options.maxEntitySize) {
+      throw new Error(
+        `Entity "${entityName}" size (${entityValue.length}) exceeds maximum allowed size (${this.options.maxEntitySize})`
+      );
+    }
     i--;
     return [entityName, entityValue, i];
   }
@@ -27170,6 +27206,8 @@ var OrderedObjParser = class {
     this.saveTextToParentTag = saveTextToParentTag;
     this.addChild = addChild;
     this.ignoreAttributesFn = getIgnoreAttributesFn(this.options.ignoreAttributes);
+    this.entityExpansionCount = 0;
+    this.currentExpandedLength = 0;
     if (this.options.stopNodes && this.options.stopNodes.length > 0) {
       this.stopNodesExact = /* @__PURE__ */ new Set();
       this.stopNodesWildcard = /* @__PURE__ */ new Set();
@@ -27202,7 +27240,7 @@ function parseTextData(val, tagName, jPath, dontTrim, hasAttributes, isLeafNode,
       val = val.trim();
     }
     if (val.length > 0) {
-      if (!escapeEntities) val = this.replaceEntitiesValue(val);
+      if (!escapeEntities) val = this.replaceEntitiesValue(val, tagName, jPath);
       const newval = this.options.tagValueProcessor(tagName, val, jPath, hasAttributes, isLeafNode);
       if (newval === null || newval === void 0) {
         return val;
@@ -27235,7 +27273,7 @@ function resolveNameSpace(tagname) {
   return tagname;
 }
 var attrsRegx = new RegExp(`([^\\s=]+)\\s*(=\\s*(['"])([\\s\\S]*?)\\3)?`, "gm");
-function buildAttributesMap(attrStr, jPath) {
+function buildAttributesMap(attrStr, jPath, tagName) {
   if (this.options.ignoreAttributes !== true && typeof attrStr === "string") {
     const matches = getAllMatches(attrStr, attrsRegx);
     const len = matches.length;
@@ -27256,7 +27294,7 @@ function buildAttributesMap(attrStr, jPath) {
           if (this.options.trimValues) {
             oldVal = oldVal.trim();
           }
-          oldVal = this.replaceEntitiesValue(oldVal);
+          oldVal = this.replaceEntitiesValue(oldVal, tagName, jPath);
           const newVal = this.options.attributeValueProcessor(attrName, oldVal, jPath);
           if (newVal === null || newVal === void 0) {
             attrs[aName] = oldVal;
@@ -27291,6 +27329,8 @@ var parseXml = function(xmlData) {
   let currentNode = xmlObj;
   let textData = "";
   let jPath = "";
+  this.entityExpansionCount = 0;
+  this.currentExpandedLength = 0;
   const docTypeReader = new DocTypeReader(this.options.processEntities);
   for (let i = 0; i < xmlData.length; i++) {
     const ch = xmlData[i];
@@ -27334,7 +27374,7 @@ var parseXml = function(xmlData) {
           const childNode = new XmlNode(tagData.tagName);
           childNode.add(this.options.textNodeName, "");
           if (tagData.tagName !== tagData.tagExp && tagData.attrExpPresent) {
-            childNode[":@"] = this.buildAttributesMap(tagData.tagExp, jPath);
+            childNode[":@"] = this.buildAttributesMap(tagData.tagExp, jPath, tagData.tagName);
           }
           this.addChild(currentNode, childNode, jPath, i);
         }
@@ -27412,10 +27452,7 @@ var parseXml = function(xmlData) {
           }
           const childNode = new XmlNode(tagName);
           if (tagName !== tagExp && attrExpPresent) {
-            childNode[":@"] = this.buildAttributesMap(
-              tagExp,
-              jPath
-            );
+            childNode[":@"] = this.buildAttributesMap(tagExp, jPath, tagName);
           }
           if (tagContent) {
             tagContent = this.parseTextData(tagContent, tagName, jPath, true, attrExpPresent, true, true);
@@ -27441,15 +27478,18 @@ var parseXml = function(xmlData) {
             }
             const childNode = new XmlNode(tagName);
             if (tagName !== tagExp && attrExpPresent) {
-              childNode[":@"] = this.buildAttributesMap(tagExp, jPath);
+              childNode[":@"] = this.buildAttributesMap(tagExp, jPath, tagName);
             }
             this.addChild(currentNode, childNode, jPath, startIndex);
             jPath = jPath.substr(0, jPath.lastIndexOf("."));
           } else {
             const childNode = new XmlNode(tagName);
+            if (this.tagsNodeStack.length > this.options.maxNestedTags) {
+              throw new Error("Maximum nested tags exceeded");
+            }
             this.tagsNodeStack.push(currentNode);
             if (tagName !== tagExp && attrExpPresent) {
-              childNode[":@"] = this.buildAttributesMap(tagExp, jPath);
+              childNode[":@"] = this.buildAttributesMap(tagExp, jPath, tagName);
             }
             this.addChild(currentNode, childNode, jPath, startIndex);
             currentNode = childNode;
@@ -27475,24 +27515,59 @@ function addChild(currentNode, childNode, jPath, startIndex) {
     currentNode.addChild(childNode, startIndex);
   }
 }
-var replaceEntitiesValue = function(val) {
-  if (this.options.processEntities) {
-    for (let entityName in this.docTypeEntities) {
-      const entity = this.docTypeEntities[entityName];
+var replaceEntitiesValue = function(val, tagName, jPath) {
+  if (val.indexOf("&") === -1) {
+    return val;
+  }
+  const entityConfig = this.options.processEntities;
+  if (!entityConfig.enabled) {
+    return val;
+  }
+  if (entityConfig.allowedTags) {
+    if (!entityConfig.allowedTags.includes(tagName)) {
+      return val;
+    }
+  }
+  if (entityConfig.tagFilter) {
+    if (!entityConfig.tagFilter(tagName, jPath)) {
+      return val;
+    }
+  }
+  for (let entityName in this.docTypeEntities) {
+    const entity = this.docTypeEntities[entityName];
+    const matches = val.match(entity.regx);
+    if (matches) {
+      this.entityExpansionCount += matches.length;
+      if (entityConfig.maxTotalExpansions && this.entityExpansionCount > entityConfig.maxTotalExpansions) {
+        throw new Error(
+          `Entity expansion limit exceeded: ${this.entityExpansionCount} > ${entityConfig.maxTotalExpansions}`
+        );
+      }
+      const lengthBefore = val.length;
       val = val.replace(entity.regx, entity.val);
-    }
-    for (let entityName in this.lastEntities) {
-      const entity = this.lastEntities[entityName];
-      val = val.replace(entity.regex, entity.val);
-    }
-    if (this.options.htmlEntities) {
-      for (let entityName in this.htmlEntities) {
-        const entity = this.htmlEntities[entityName];
-        val = val.replace(entity.regex, entity.val);
+      if (entityConfig.maxExpandedLength) {
+        this.currentExpandedLength += val.length - lengthBefore;
+        if (this.currentExpandedLength > entityConfig.maxExpandedLength) {
+          throw new Error(
+            `Total expanded content size exceeded: ${this.currentExpandedLength} > ${entityConfig.maxExpandedLength}`
+          );
+        }
       }
     }
-    val = val.replace(this.ampEntity.regex, this.ampEntity.val);
   }
+  if (val.indexOf("&") === -1) return val;
+  for (let entityName in this.lastEntities) {
+    const entity = this.lastEntities[entityName];
+    val = val.replace(entity.regex, entity.val);
+  }
+  if (val.indexOf("&") === -1) return val;
+  if (this.options.htmlEntities) {
+    for (let entityName in this.htmlEntities) {
+      const entity = this.htmlEntities[entityName];
+      val = val.replace(entity.regex, entity.val);
+    }
+  }
+  val = val.replace(this.ampEntity.regex, this.ampEntity.val);
   return val;
 };
 function saveTextToParentTag(textData, currentNode, jPath, isLeafNode) {
@@ -27667,9 +27742,6 @@ function compress(arr, options, jPath) {
     } else if (tagObj[property]) {
       let val = compress(tagObj[property], options, newJpath);
       const isLeaf = isLeafTag(val, options);
-      if (tagObj[METADATA_SYMBOL2] !== void 0) {
-        val[METADATA_SYMBOL2] = tagObj[METADATA_SYMBOL2];
-      }
       if (tagObj[":@"]) {
         assignAttributes(val, tagObj[":@"], newJpath, options);
       } else if (Object.keys(val).length === 1 && val[options.textNodeName] !== void 0 && !options.alwaysCreateTextNode) {
@@ -27678,7 +27750,10 @@ function compress(arr, options, jPath) {
         if (options.alwaysCreateTextNode) val[options.textNodeName] = "";
         else val = "";
       }
-      if (compressedObj[property] !== void 0 && compressedObj.hasOwnProperty(property)) {
+      if (tagObj[METADATA_SYMBOL2] !== void 0 && typeof val === "object" && val !== null) {
+        val[METADATA_SYMBOL2] = tagObj[METADATA_SYMBOL2];
+      }
+      if (compressedObj[property] !== void 0 && Object.prototype.hasOwnProperty.call(compressedObj, property)) {
         if (!Array.isArray(compressedObj[property])) {
           compressedObj[property] = [compressedObj[property]];
         }
