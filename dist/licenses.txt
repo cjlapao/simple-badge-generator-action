@@ -346,7 +346,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 The following npm package may be included in this product:
 
- - lru-cache@11.3.5
+ - lru-cache@11.5.1
 
 This package contains the following license:
 
@@ -2167,7 +2167,7 @@ SOFTWARE.
 
 The following npm package may be included in this product:
 
- - semver@7.7.4
+ - semver@7.8.5
 
 This package contains the following license:
 
