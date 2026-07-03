@@ -26703,7 +26703,6 @@ var BASIC_LATIN = {
   num: "#",
   dollar: "$",
   percent: "%",
-  amp: "&",
   ast: "*",
   commat: "@",
   lowbar: "_",
@@ -27110,9 +27109,6 @@ var CYRILLIC = {
 };
 var MATH = {
   plus: "+",
-  minus: "\u2212",
-  mnplus: "\u2213",
-  mp: "\u2213",
   pm: "\xB1",
   times: "\xD7",
   div: "\xF7",
@@ -27185,10 +27181,6 @@ var MATH = {
   bumpe: "\u224F",
   bumpeq: "\u224F",
   HumpEqual: "\u224F",
-  dotminus: "\u2238",
-  minusd: "\u2238",
-  plusdo: "\u2214",
-  dotplus: "\u2214",
   le: "\u2264",
   LessEqual: "\u2264",
   ge: "\u2265",
@@ -27299,7 +27291,6 @@ var MATH_ADVANCED = {
   wr: "\u2240",
   wreath: "\u2240",
   nsime: "\u2244",
-  nsimeq: "\u2244",
   nsimeq: "\u2244",
   ncong: "\u2247",
   simne: "\u2246",
@@ -27412,10 +27403,6 @@ var ARROWS = {
   mapsto: "\u21A6",
   mapstodown: "\u21A7",
   crarr: "\u21B5",
-  nwarrow: "\u2196",
-  nearrow: "\u2197",
-  searrow: "\u2198",
-  swarrow: "\u2199",
   nleftarrow: "\u219A",
   nleftrightarrow: "\u21AE",
   nrightarrow: "\u219B",
@@ -27456,7 +27443,6 @@ var ARROWS = {
   ldrushar: "\u294B",
   rdldhar: "\u2969",
   lrhard: "\u296D",
-  rlhar: "\u21CC",
   uharr: "\u21BE",
   uharl: "\u21BF",
   dharr: "\u21C2",
@@ -27472,7 +27458,6 @@ var ARROWS = {
   nhArr: "\u21CE",
   nlarr: "\u219A",
   nlArr: "\u21CD",
-  nrarr: "\u219B",
   nrArr: "\u21CF",
   larrb: "\u21E4",
   LeftArrowBar: "\u21E4",
@@ -27623,8 +27608,7 @@ var PUNCTUATION = {
   DiacriticalTilde: "\u02DC",
   DiacriticalDot: "\u02D9",
   DiacriticalDoubleAcute: "\u02DD",
-  grave: "`",
-  acute: "\xB4"
+  grave: "`"
 };
 var CURRENCY = {
   cent: "\xA2",
@@ -27633,7 +27617,6 @@ var CURRENCY = {
   yen: "\xA5",
   euro: "\u20AC",
   dollar: "$",
-  euro: "\u20AC",
   fnof: "\u0192",
   inr: "\u20B9",
   af: "\u060B",
@@ -27723,7 +27706,6 @@ var MISC_SYMBOLS = {
   Vdash: "\u22A9",
   dashv: "\u22A3",
   vDash: "\u22A8",
-  Vdash: "\u22A9",
   Vvdash: "\u22AA",
   nvdash: "\u22AC",
   nvDash: "\u22AD",
@@ -27776,6 +27758,14 @@ var COMMON_HTML = {
 };
 
 // node_modules/@nodable/entities/src/EntityDecoder.js
+var ENTITY_ACTION = Object.freeze({
+  /** Resolve and expand the entity normally. */
+  ALLOW: "allow",
+  /** Silently skip this entity — it will not be registered. */
+  BLOCK: "block",
+  /** Throw an error, aborting entity registration entirely. */
+  THROW: "throw"
+});
 var SPECIAL_CHARS = new Set("!?\\\\/[]$%{}^&*()<>|+");
 function validateEntityName(name) {
   if (name[0] === "#") {
@@ -27855,6 +27845,14 @@ var EntityDecoder = class {
    *   the effective action is max(onNCR, rangeMinimum).
    * @param {'remove'|'throw'} [options.ncr.nullNCR='remove']
    *   Action for U+0000 (null). 'allow' and 'leave' are clamped to 'remove' since null is never safe.
+   * @param {((name: string, value: string) => 'allow'|'block'|'throw')|null} [options.onExternalEntity=null]
+   *   Hook called when an external entity is registered via `setExternalEntities()` or
+   *   `addExternalEntity()`. Return `ENTITY_ACTION.ALLOW` to accept the entity,
+   *   `ENTITY_ACTION.BLOCK` to silently skip it, or `ENTITY_ACTION.THROW` to abort with an error.
+   * @param {((name: string, value: string) => 'allow'|'block'|'throw')|null} [options.onInputEntity=null]
+   *   Hook called when an input entity is registered via `addInputEntities()`. Return
+   *   `ENTITY_ACTION.ALLOW` to accept, `ENTITY_ACTION.BLOCK` to silently skip, or
+   *   `ENTITY_ACTION.THROW` to abort with an error.
    */
   constructor(options = {}) {
     this._limit = options.limit || {};
@@ -27874,6 +27872,33 @@ var EntityDecoder = class {
     this._ncrXmlVersion = ncrCfg.xmlVersion;
     this._ncrOnLevel = ncrCfg.onLevel;
     this._ncrNullLevel = ncrCfg.nullLevel;
+    this._onExternalEntity = typeof options.onExternalEntity === "function" ? options.onExternalEntity : null;
+    this._onInputEntity = typeof options.onInputEntity === "function" ? options.onInputEntity : null;
+  }
+  // -------------------------------------------------------------------------
+  // Private: registration hook dispatch
+  // -------------------------------------------------------------------------
+  /**
+   * Invoke a registration hook for a single entity name/value pair.
+   * Returns true when the entity should be accepted, false when it should be
+   * silently skipped (BLOCK), and throws when the hook returns THROW.
+   *
+   * @param {((name: string, value: string) => 'allow'|'block'|'throw')|null} hook
+   * @param {string} name
+   * @param {string} value
+   * @param {string} context  — used in error messages ('external' | 'input')
+   * @returns {boolean}  true = accept, false = skip
+   */
+  _applyRegistrationHook(hook, name, value, context) {
+    if (!hook) return true;
+    const action = hook(name, value);
+    if (action === ENTITY_ACTION.BLOCK) return false;
+    if (action === ENTITY_ACTION.THROW) {
+      throw new Error(
+        `[EntityDecoder] Registration of ${context} entity "&${name};" was rejected by hook`
+      );
+    }
+    return true;
   }
   // -------------------------------------------------------------------------
   // Persistent external entity registration
@@ -27881,6 +27906,9 @@ var EntityDecoder = class {
   /**
    * Replace the full set of persistent external entities.
    * All keys are validated — throws on invalid characters.
+   * If `onExternalEntity` is set, it is called once per entry; entries that
+   * return `ENTITY_ACTION.BLOCK` are silently omitted, `ENTITY_ACTION.THROW`
+   * aborts the whole call.
    * @param {Record<string, string | { regex?: RegExp, val: string }>} map
    */
   setExternalEntities(map) {
@@ -27889,17 +27917,32 @@ var EntityDecoder = class {
         validateEntityName(key);
       }
     }
-    this._externalMap = mergeEntityMaps(map);
+    if (!this._onExternalEntity) {
+      this._externalMap = mergeEntityMaps(map);
+      return;
+    }
+    const flat = mergeEntityMaps(map);
+    const filtered = /* @__PURE__ */ Object.create(null);
+    for (const [name, value] of Object.entries(flat)) {
+      if (this._applyRegistrationHook(this._onExternalEntity, name, value, "external")) {
+        filtered[name] = value;
+      }
+    }
+    this._externalMap = filtered;
   }
   /**
    * Add a single persistent external entity.
+   * If `onExternalEntity` is set it is called before the entity is stored;
+   * `ENTITY_ACTION.BLOCK` silently skips storage, `ENTITY_ACTION.THROW` raises.
    * @param {string} key
    * @param {string} value
    */
   addExternalEntity(key, value) {
     validateEntityName(key);
     if (typeof value === "string" && value.indexOf("&") === -1) {
-      this._externalMap[key] = value;
+      if (this._applyRegistrationHook(this._onExternalEntity, key, value, "external")) {
+        this._externalMap[key] = value;
+      }
     }
   }
   // -------------------------------------------------------------------------
@@ -27908,12 +27951,25 @@ var EntityDecoder = class {
   /**
    * Inject DOCTYPE entities for the current document.
    * Also resets per-document expansion counters.
+   * If `onInputEntity` is set it is called once per entry; entries returning
+   * `ENTITY_ACTION.BLOCK` are silently omitted, `ENTITY_ACTION.THROW` aborts.
    * @param {Record<string, string | { regx?: RegExp, regex?: RegExp, val: string }>} map
    */
   addInputEntities(map) {
     this._totalExpansions = 0;
     this._expandedLength = 0;
-    this._inputMap = mergeEntityMaps(map);
+    if (!this._onInputEntity) {
+      this._inputMap = mergeEntityMaps(map);
+      return;
+    }
+    const flat = mergeEntityMaps(map);
+    const filtered = /* @__PURE__ */ Object.create(null);
+    for (const [name, value] of Object.entries(flat)) {
+      if (this._applyRegistrationHook(this._onInputEntity, name, value, "input")) {
+        filtered[name] = value;
+      }
+    }
+    this._inputMap = filtered;
   }
   // -------------------------------------------------------------------------
   // Per-document reset
@@ -27951,6 +28007,7 @@ var EntityDecoder = class {
    */
   decode(str) {
     if (typeof str !== "string" || str.length === 0) return str;
+    if (str.indexOf("&") === -1) return str;
     const original = str;
     const chunks = [];
     const len = str.length;
@@ -28170,7 +28227,8 @@ var defaultOptions2 = {
   numberParseOptions: {
     hex: true,
     leadingZeros: true,
-    eNotation: true
+    eNotation: true,
+    unicode: false
   },
   tagValueProcessor: function(tagName, val) {
     return val;
@@ -28312,11 +28370,37 @@ var XmlNode = class {
   }
 };
 
+// node_modules/xml-naming/src/index.js
+var nameStartChar10 = ":A-Za-z_\xC0-\xD6\xD8-\xF6\xF8-\u02FF\u0370-\u037D\u037F-\u0486\u0488-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD";
+var nameChar10 = nameStartChar10 + "\\-\\.\\d\xB7\u0300-\u036F\u203F-\u2040";
+var nameStartChar11 = ":A-Za-z_\xC0-\u02FF\u0370-\u037D\u037F-\u0486\u0488-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\u{10000}-\u{EFFFF}";
+var nameChar11 = nameStartChar11 + "\\-\\.\\d\xB7\u0300-\u036F\u0487\u203F-\u2040";
+var buildRegexes = (startChar, char, flags = "") => {
+  const ncStart = startChar.replace(":", "");
+  const ncChar = char.replace(":", "");
+  const ncNamePat = `[${ncStart}][${ncChar}]*`;
+  return {
+    name: new RegExp(`^[${startChar}][${char}]*$`, flags),
+    ncName: new RegExp(`^${ncNamePat}$`, flags),
+    qName: new RegExp(`^${ncNamePat}(?::${ncNamePat})?$`, flags),
+    nmToken: new RegExp(`^[${char}]+$`, flags),
+    nmTokens: new RegExp(`^[${char}]+(?:\\s+[${char}]+)*$`, flags)
+  };
+};
+var regexes10 = buildRegexes(nameStartChar10, nameChar10);
+var regexes11 = buildRegexes(nameStartChar11, nameChar11, "u");
+var getRegexes = (xmlVersion = "1.0") => xmlVersion === "1.1" ? regexes11 : regexes10;
+var qName = (str, { xmlVersion = "1.0" } = {}) => getRegexes(xmlVersion).qName.test(str);
+
 // node_modules/fast-xml-parser/src/xmlparser/DocTypeReader.js
 var DocTypeReader = class {
-  constructor(options) {
+  constructor(options, xmlVersion) {
     this.suppressValidationErr = !options;
     this.options = options;
+    this.xmlVersion = xmlVersion || 1;
+  }
+  setXmlVersion(xmlVersion = 1) {
+    this.xmlVersion = xmlVersion;
   }
   readDocType(xmlData, i) {
     const entities = /* @__PURE__ */ Object.create(null);
@@ -28388,7 +28472,7 @@ var DocTypeReader = class {
       i++;
     }
     let entityName = xmlData.substring(startIndex, i);
-    validateEntityName2(entityName);
+    validateEntityName2(entityName, { xmlVersion: this.xmlVersion });
     i = skipWhitespace(xmlData, i);
     if (!this.suppressValidationErr) {
       if (xmlData.substring(i, i + 6).toUpperCase() === "SYSTEM") {
@@ -28414,7 +28498,7 @@ var DocTypeReader = class {
       i++;
     }
     let notationName = xmlData.substring(startIndex, i);
-    !this.suppressValidationErr && validateEntityName2(notationName);
+    !this.suppressValidationErr && validateEntityName2(notationName, { xmlVersion: this.xmlVersion });
     i = skipWhitespace(xmlData, i);
     const identifierType = xmlData.substring(i, i + 6).toUpperCase();
     if (!this.suppressValidationErr && identifierType !== "SYSTEM" && identifierType !== "PUBLIC") {
@@ -28463,7 +28547,7 @@ var DocTypeReader = class {
       i++;
     }
     let elementName = xmlData.substring(startIndex, i);
-    if (!this.suppressValidationErr && !isName(elementName)) {
+    if (!this.suppressValidationErr && !qName(elementName, { xmlVersion: this.xmlVersion })) {
       throw new Error(`Invalid element name: "${elementName}"`);
     }
     i = skipWhitespace(xmlData, i);
@@ -28496,14 +28580,14 @@ var DocTypeReader = class {
       i++;
     }
     let elementName = xmlData.substring(startIndex, i);
-    validateEntityName2(elementName);
+    validateEntityName2(elementName, { xmlVersion: this.xmlVersion });
     i = skipWhitespace(xmlData, i);
     startIndex = i;
     while (i < xmlData.length && !/\s/.test(xmlData[i])) {
       i++;
     }
     let attributeName = xmlData.substring(startIndex, i);
-    if (!validateEntityName2(attributeName)) {
+    if (!validateEntityName2(attributeName, { xmlVersion: this.xmlVersion })) {
       throw new Error(`Invalid attribute name: "${attributeName}"`);
     }
     i = skipWhitespace(xmlData, i);
@@ -28524,7 +28608,7 @@ var DocTypeReader = class {
         }
         let notation = xmlData.substring(startIndex2, i);
         notation = notation.trim();
-        if (!validateEntityName2(notation)) {
+        if (!validateEntityName2(notation, { xmlVersion: this.xmlVersion })) {
           throw new Error(`Invalid notation name: "${notation}"`);
         }
         allowedNotations.push(notation);
@@ -28581,25 +28665,257 @@ function hasSeq(data, seq, i) {
   }
   return true;
 }
-function validateEntityName2(name) {
-  if (isName(name))
+function validateEntityName2(name, xmlVersion) {
+  if (qName(name, { xmlVersion }))
     return name;
   else
     throw new Error(`Invalid entity name ${name}`);
 }
 
+// node_modules/anynum/digitTable.js
+var SCRIPT_ZEROS = [
+  // Basic Latin (ASCII) — included for completeness / pass-through
+  48,
+  // 0-9
+  // Arabic scripts
+  1632,
+  // Arabic-Indic ٠١٢٣٤٥٦٧٨٩
+  1776,
+  // Extended Arabic-Indic (Urdu/Persian/Sindhi) ۰۱۲۳
+  // Indic scripts
+  2406,
+  // Devanagari ०१२३४५६७८९
+  2534,
+  // Bengali ০১২৩৪৫৬৭৮৯
+  2662,
+  // Gurmukhi ੦੧੨੩੪੫੬੭੮੯
+  2790,
+  // Gujarati ૦૧૨૩૪૫૬૭૮૯
+  2918,
+  // Odia ୦୧୨୩୪୫୬୭୮୯
+  3046,
+  // Tamil ௦௧௨௩௪௫௬௭௮௯
+  3174,
+  // Telugu ౦౧౨౩౪౫౬౭౮౯
+  3302,
+  // Kannada ೦೧೨೩೪೫೬೭೮೯
+  3430,
+  // Malayalam ൦൧൨൩൪൫൬൭൮൯
+  3558,
+  // Sinhala Archaic ෦෧෨෩෪෫෬෭෮෯
+  // Southeast Asian scripts
+  3664,
+  // Thai ๐๑๒๓๔๕๖๗๘๙
+  3792,
+  // Lao ໐໑໒໓໔໕໖໗໘໙
+  3872,
+  // Tibetan ༠༡༢༣༤༥༦༧༨༩
+  4160,
+  // Myanmar ၀၁၂၃၄၅၆၇၈၉
+  4240,
+  // Myanmar Shan ႐႑႒႓႔႕႖႗႘႙
+  6112,
+  // Khmer ០១២៣៤៥៦៧៨៩
+  6160,
+  // Mongolian ᠐᠑᠒᠓᠔᠕᠖᠗᠘᠙
+  6470,
+  // Limbu ᥆᥇᥈᥉᥊᥋᥌᥍᥎᥏
+  6608,
+  // New Tai Lue ᧐᧑᧒᧓᧔᧕᧖᧗᧘᧙
+  6784,
+  // Tai Tham Hora ᪀᪁᪂᪃᪄᪅᪆᪇᪈᪉
+  6800,
+  // Tai Tham Tham ᪐᪑᪒᪓᪔᪕᪖᪗᪘᪙
+  6992,
+  // Balinese ᭐᭑᭒᭓᭔᭕᭖᭗᭘᭙
+  7088,
+  // Sundanese ᮰᮱᮲᮳᮴᮵᮶᮷᮸᮹
+  7232,
+  // Lepcha ᱀᱁᱂᱃᱄᱅᱆᱇᱈᱉
+  7248,
+  // Ol Chiki ᱐᱑᱒᱓᱔᱕᱖᱗᱘᱙
+  // Fullwidth (CJK context)
+  65296,
+  // Fullwidth ０１２３４５６７８９
+  // Mathematical digit variants (Unicode math block)
+  120782,
+  // Mathematical Bold
+  120792,
+  // Mathematical Double-Struck
+  120802,
+  // Mathematical Sans-Serif
+  120812,
+  // Mathematical Sans-Serif Bold
+  120822,
+  // Mathematical Monospace
+  // Other scripts
+  66720,
+  // Osmanya 𐒠𐒡𐒢𐒣𐒤𐒥𐒦𐒧𐒨𐒩
+  68912,
+  // Hanifi Rohingya 𐴰𐴱𐴲𐴳𐴴𐴵𐴶𐴷𐴸𐴹
+  69734,
+  // Brahmi 𑁦𑁧𑁨𑁩𑁪𑁫𑁬𑁭𑁮𑁯
+  69872,
+  // Sora Sompeng 𑃰𑃱𑃲𑃳𑃴𑃵𑃶𑃷𑃸𑃹
+  69942,
+  // Chakma 𑄶𑄷𑄸𑄹𑄺𑄻𑄼𑄽𑄾𑄿
+  70096,
+  // Sharada 𑇐𑇑𑇒𑇓𑇔𑇕𑇖𑇗𑇘𑇙
+  70384,
+  // Khudawadi 𑋰𑋱𑋲𑋳𑋴𑋵𑋶𑋷𑋸𑋹
+  70736,
+  // Newa 𑑐𑑑𑑒𑑓𑑔𑑕𑑖𑑗𑑘𑑙
+  70864,
+  // Tirhuta 𑓐𑓑𑓒𑓓𑓔𑓕𑓖𑓗𑓘𑓙
+  71248,
+  // Modi 𑙐𑙑𑙒𑙓𑙔𑙕𑙖𑙗𑙘𑙙
+  71360,
+  // Takri 𑛀𑛁𑛂𑛃𑛄𑛅𑛆𑛇𑛈𑛉
+  71472,
+  // Ahom 𑜰𑜱𑜲𑜳𑜴𑜵𑜶𑜷𑜸𑜹
+  71904,
+  // Warang Citi 𑣠𑣡𑣢𑣣𑣤𑣥𑣦𑣧𑣨𑣩
+  72016,
+  // Dives Akuru 𑥐𑥑𑥒𑥓𑥔𑥕𑥖𑥗𑥘𑥙
+  72688,
+  // Khitan Small Script 𑯰𑯱𑯲𑯳𑯴𑯵𑯶𑯷𑯸𑯹
+  72784,
+  // Bhaiksuki 𑱐𑱑𑱒𑱓𑱔𑱕𑱖𑱗𑱘𑱙
+  73040,
+  // Masaram Gondi 𑵐𑵑𑵒𑵓𑵔𑵕𑵖𑵗𑵘𑵙
+  73120,
+  // Gunjala Gondi 𑶠𑶡𑶢𑶣𑶤𑶥𑶦𑶧𑶨𑶩
+  73552,
+  // Kawi 𑽐𑽑𑽒𑽓𑽔𑽕𑽖𑽗𑽘𑽙
+  92768,
+  // Mro 𖩠𖩡𖩢𖩣𖩤𖩥𖩦𖩧𖩨𖩩
+  92864,
+  // Tangsa 𖫀𖫁𖫂𖫃𖫄𖫅𖫆𖫇𖫈𖫉
+  93008,
+  // Pahawh Hmong 𖭐𖭑𖭒𖭓𖭔𖭕𖭖𖭗𖭘𖭙
+  123200,
+  // Nyiakeng Puachue Hmong 𞅀𞅁𞅂𞅃𞅄𞅅𞅆𞅇𞅈𞅉
+  123632,
+  // Wancho 𞋰𞋱𞋲𞋳𞋴𞋵𞋶𞋷𞋸𞋹
+  124144,
+  // Nag Mundari 𞓰𞓱𞓲𞓳𞓴𞓵𞓶𞓷𞓸𞓹
+  125264,
+  // Adlam 𞥐𞥑𞥒𞥓𞥔𞥕𞥖𞥗𞥘𞥙
+  130032
+  // Segmented digit symbols 🯰🯱🯲🯳🯴🯵🯶🯷🯸🯹
+];
+var NOT_DIGIT = 255;
+var HIGH_MAP = /* @__PURE__ */ new Map();
+var LOW_MAX = 65535;
+var LOW_MIN = 1632;
+var TABLE_OFFSET = LOW_MIN;
+var TABLE_SIZE = LOW_MAX - LOW_MIN + 1;
+var TABLE = new Uint8Array(TABLE_SIZE).fill(NOT_DIGIT);
+for (const zero of SCRIPT_ZEROS) {
+  for (let d = 0; d < 10; d++) {
+    const cp = zero + d;
+    if (cp <= LOW_MAX) {
+      TABLE[cp - TABLE_OFFSET] = d;
+    } else {
+      HIGH_MAP.set(cp, d);
+    }
+  }
+}
+
+// node_modules/anynum/anynum.js
+var CHAR_0 = 48;
+var CHAR_9 = 57;
+var CHAR_MINUS = 45;
+var MINUS_SET = /* @__PURE__ */ new Set([8722, 65293, 65123]);
+function anynum(str) {
+  if (typeof str !== "string") return str;
+  const len = str.length;
+  if (len === 0) return str;
+  let firstHit = -1;
+  for (let i = 0; i < len; i++) {
+    const cc = str.charCodeAt(i);
+    if (cc >= CHAR_0 && cc <= CHAR_9 || cc === CHAR_MINUS) continue;
+    if (cc < TABLE_OFFSET) {
+      if (MINUS_SET.has(cc)) {
+        firstHit = i;
+        break;
+      }
+      continue;
+    }
+    if (cc >= 55296 && cc <= 56319) {
+      if (i + 1 < len) {
+        const low = str.charCodeAt(i + 1);
+        if (low >= 56320 && low <= 57343) {
+          const cp = 65536 + (cc - 55296 << 10) + (low - 56320);
+          if (HIGH_MAP.has(cp)) {
+            firstHit = i;
+            break;
+          }
+        }
+      }
+      continue;
+    }
+    if (TABLE[cc - TABLE_OFFSET] !== NOT_DIGIT || MINUS_SET.has(cc)) {
+      firstHit = i;
+      break;
+    }
+  }
+  if (firstHit === -1) return str;
+  const chars = [];
+  if (firstHit > 0) chars.push(str.slice(0, firstHit));
+  for (let i = firstHit; i < len; i++) {
+    const cc = str.charCodeAt(i);
+    if (cc >= CHAR_0 && cc <= CHAR_9 || cc === CHAR_MINUS) {
+      chars.push(str[i]);
+      continue;
+    }
+    if (cc < TABLE_OFFSET) {
+      chars.push(MINUS_SET.has(cc) ? "-" : str[i]);
+      continue;
+    }
+    if (cc >= 55296 && cc <= 56319) {
+      if (i + 1 < len) {
+        const low = str.charCodeAt(i + 1);
+        if (low >= 56320 && low <= 57343) {
+          const cp = 65536 + (cc - 55296 << 10) + (low - 56320);
+          const d2 = HIGH_MAP.get(cp);
+          if (d2 !== void 0) {
+            chars.push(String.fromCharCode(d2 + 48));
+            i++;
+            continue;
+          }
+        }
+      }
+      chars.push(str[i]);
+      continue;
+    }
+    if (MINUS_SET.has(cc)) {
+      chars.push("-");
+      continue;
+    }
+    const d = TABLE[cc - TABLE_OFFSET];
+    chars.push(d !== NOT_DIGIT ? String.fromCharCode(d + 48) : str[i]);
+  }
+  return chars.join("");
+}
+var anynum_default = anynum;
+
 // node_modules/strnum/strnum.js
 var hexRegex = /^[-+]?0x[a-fA-F0-9]+$/;
+var binRegex = /^0b[01]+$/;
+var octRegex = /^0o[0-7]+$/;
 var numRegex = /^([\-\+])?(0*)([0-9]*(\.[0-9]*)?)$/;
 var consider = {
   hex: true,
-  // oct: false,
+  binary: false,
+  octal: false,
   leadingZeros: true,
   decimalPoint: ".",
   eNotation: true,
   //skipLike: /regex/,
-  infinity: "original"
+  infinity: "original",
   // "null", "infinity" (Infinity type), "string" ("Infinity" (the string literal))
+  unicode: false
 };
 function toNumber(str, options = {}) {
   options = Object.assign({}, consider, options);
@@ -28608,8 +28924,16 @@ function toNumber(str, options = {}) {
   if (trimmedStr.length === 0) return str;
   else if (options.skipLike !== void 0 && options.skipLike.test(trimmedStr)) return str;
   else if (trimmedStr === "0") return 0;
-  else if (options.hex && hexRegex.test(trimmedStr)) {
+  if (options.unicode) {
+    trimmedStr = anynum_default(trimmedStr);
+    if (trimmedStr === "0") return 0;
+  }
+  if (options.hex && hexRegex.test(trimmedStr)) {
     return parse_int(trimmedStr, 16);
+  } else if (options.binary && binRegex.test(trimmedStr)) {
+    return parse_int(trimmedStr, 2);
+  } else if (options.octal && octRegex.test(trimmedStr)) {
+    return parse_int(trimmedStr, 8);
   } else if (!isFinite(trimmedStr)) {
     return handleInfinity(str, Number(trimmedStr), options);
   } else if (trimmedStr.includes("e") || trimmedStr.includes("E")) {
@@ -28689,6 +29013,8 @@ function trimZeros(numStr) {
   return numStr;
 }
 function parse_int(numStr, base) {
+  const str = numStr.trim();
+  if (base === 2 || base === 8) numStr = str.substring(2);
   if (parseInt) return parseInt(numStr, base);
   else if (Number.parseInt) return Number.parseInt(numStr, base);
   else if (window && window.parseInt) return window.parseInt(numStr, base);
@@ -29312,21 +29638,21 @@ var Matcher = class {
    * @returns {string}
    */
   toString(separator, includeNamespace = true) {
-    const sep = separator || this.separator;
-    const isDefault = sep === this.separator && includeNamespace === true;
+    const sep2 = separator || this.separator;
+    const isDefault = sep2 === this.separator && includeNamespace === true;
     if (isDefault) {
       if (this._pathStringCache !== null) {
         return this._pathStringCache;
       }
       const result = this.path.map(
         (n) => n.namespace ? `${n.namespace}:${n.tag}` : n.tag
-      ).join(sep);
+      ).join(sep2);
       this._pathStringCache = result;
       return result;
     }
     return this.path.map(
       (n) => includeNamespace && n.namespace ? `${n.namespace}:${n.tag}` : n.tag
-    ).join(sep);
+    ).join(sep2);
   }
   /**
    * Get path as array of tag names.
@@ -29498,6 +29824,728 @@ var Matcher = class {
   }
 };
 
+// node_modules/is-unsafe/src/contexts/html.js
+var HTML_PATTERNS = [
+  {
+    id: "html-script-open",
+    description: "<script opening tag",
+    pattern: /<script[\s>/]/i
+  },
+  {
+    id: "html-script-close",
+    description: "</script closing tag",
+    pattern: /<\/script[\s>]/i
+  },
+  {
+    id: "html-javascript-protocol",
+    description: "javascript: URI scheme (with optional whitespace/encoding)",
+    // Handles j&#x61;vascript:, j\u0061vascript:, and whitespace variants
+    pattern: /j[\t\n\r ]*a[\t\n\r ]*v[\t\n\r ]*a[\t\n\r ]*s[\t\n\r ]*c[\t\n\r ]*r[\t\n\r ]*i[\t\n\r ]*p[\t\n\r ]*t[\t\n\r ]*:/i
+  },
+  {
+    id: "html-vbscript-protocol",
+    description: "vbscript: URI scheme",
+    pattern: /vbscript[\t\n\r ]*:/i
+  },
+  {
+    id: "html-data-html",
+    description: "data:text/html URI \u2014 can execute scripts in browsers",
+    pattern: /data[\t\n\r ]*:[\t\n\r ]*text\/html/i
+  },
+  {
+    id: "html-data-xhtml",
+    description: "data:application/xhtml+xml URI",
+    pattern: /data[\t\n\r ]*:[\t\n\r ]*application\/xhtml/i
+  },
+  {
+    id: "html-data-svg",
+    description: "data:image/svg+xml URI \u2014 can execute scripts",
+    pattern: /data[\t\n\r ]*:[\t\n\r ]*image\/svg\+xml/i
+  },
+  {
+    id: "html-inline-event-handler",
+    description: "Inline event handler attributes: onclick=, onerror=, onload=, etc.",
+    // \bon ensures we match a word boundary so "phonetic=" is not caught
+    pattern: /\bon\w{1,30}\s*=/i
+  },
+  {
+    id: "html-entity-obfuscated-script",
+    description: "HTML-entity-encoded <script (e.g. &#x3C;script or &lt;script)",
+    // Entities include optional trailing semicolon: &#x3C; or &#x3C (both valid in HTML5)
+    pattern: /(?:&#x0*3[Cc];?|&#0*60;?|&lt;)\s*script/i
+  },
+  {
+    id: "html-entity-obfuscated-javascript",
+    description: 'HTML-entity-encoded javascript: (partial \u2014 catches common &#106; or &#x6a; for "j")',
+    pattern: /(?:&#x0*6[Aa];?|&#0*106;?)\s*(?:&#x0*61;?|a)[\s\S]{0,80}script\s*:/i
+  },
+  {
+    id: "html-style-expression",
+    description: "CSS expression() \u2014 IE-era code execution in style attributes",
+    pattern: /style[\s\S]{0,20}expression\s*\(/i
+  },
+  {
+    id: "html-object-embed",
+    description: "<object or <embed tags that can load active content",
+    pattern: /<(?:object|embed)[\s>/]/i
+  },
+  {
+    id: "html-base-tag",
+    description: "<base href= \u2014 can hijack all relative URLs on a page",
+    pattern: /<base[\s>]/i
+  },
+  {
+    id: "html-meta-refresh",
+    description: '<meta http-equiv="refresh" \u2014 can redirect users',
+    pattern: /<meta[\s\S]{0,40}http-equiv[\s\S]{0,20}refresh/i
+  },
+  {
+    id: "html-srcdoc",
+    description: "srcdoc= attribute on iframes \u2014 embeds HTML that can run scripts",
+    pattern: /srcdoc\s*=/i
+  },
+  {
+    id: "html-iframe",
+    description: "<iframe tag",
+    pattern: /<iframe[\s>/]/i
+  },
+  {
+    id: "html-form",
+    description: "<form tag \u2014 can be used for phishing / credential harvesting injection",
+    pattern: /<form[\s>/]/i
+  }
+];
+var html_default = HTML_PATTERNS;
+
+// node_modules/is-unsafe/src/contexts/xml.js
+var XML_PATTERNS = [
+  {
+    id: "xml-cdata-injection",
+    description: "CDATA section injection: <![CDATA[ breaks out of text node context",
+    pattern: /<!\[CDATA\[/i
+  },
+  {
+    id: "xml-cdata-close",
+    description: "CDATA close sequence: ]]> can terminate an enclosing CDATA section",
+    pattern: /\]\]>/
+  },
+  {
+    id: "xml-processing-instruction",
+    description: "XML processing instruction: <?xml-stylesheet or <?php etc.",
+    pattern: /<\?(?:xml[\- ]|php|asp)/i
+  },
+  {
+    id: "xml-doctype-injection",
+    description: "DOCTYPE declaration embedded in content \u2014 can define entities",
+    // Match <!DOCTYPE followed by end-of-string, whitespace, or [ (internal subset)
+    pattern: /<!DOCTYPE(?:[\s[]|$)/i
+  },
+  {
+    id: "xml-entity-system",
+    description: "SYSTEM keyword \u2014 used in external entity declarations (XXE)",
+    pattern: /\bSYSTEM\s+["']/i
+  },
+  {
+    id: "xml-entity-public",
+    description: "PUBLIC keyword \u2014 used in external entity declarations (XXE)",
+    pattern: /\bPUBLIC\s+["']/i
+  },
+  {
+    id: "xml-entity-declaration",
+    description: "<!ENTITY declaration \u2014 defines entities, potential XXE or entity expansion",
+    pattern: /<!ENTITY[\s%]/i
+  },
+  {
+    id: "xml-billion-laughs",
+    description: "Entity reference chaining / billion laughs: repeated &eX; style references",
+    // Heuristic: 3+ consecutive entity refs suggests expansion attack
+    pattern: /(?:&\w{1,20};){3,}/
+  },
+  {
+    id: "xml-namespace-confusion",
+    description: "xmlns: attribute injection \u2014 can redefine namespaces to confuse parsers",
+    pattern: /\bxmlns\s*(?::\w{1,40})?\s*=/i
+  },
+  {
+    id: "xml-comment-injection",
+    description: "<!-- comment injection \u2014 can hide content from some parsers",
+    pattern: /<!--/
+  },
+  {
+    id: "xml-comment-close",
+    description: "--> closes an enclosing XML comment",
+    pattern: /-->/
+  },
+  {
+    id: "xml-pi-close",
+    description: "?> closes an enclosing processing instruction",
+    pattern: /\?>/
+  }
+];
+var xml_default = XML_PATTERNS;
+
+// node_modules/is-unsafe/src/contexts/svg.js
+var SVG_PATTERNS = [
+  {
+    id: "svg-script-element",
+    description: "<script element inside SVG executes JavaScript",
+    pattern: /<script[\s>/]/i
+  },
+  {
+    id: "svg-xlink-href-javascript",
+    description: "xlink:href with javascript: \u2014 classic SVG XSS via <a> or <use>",
+    pattern: /xlink\s*:\s*href\s*=\s*["']?\s*javascript\s*:/i
+  },
+  {
+    id: "svg-href-javascript",
+    description: "href= with javascript: in SVG context (<a>, <animate>, etc.)",
+    pattern: /href\s*=\s*["']?\s*javascript\s*:/i
+  },
+  {
+    id: "svg-foreignobject",
+    description: "<foreignObject embeds HTML inside SVG \u2014 can execute scripts",
+    pattern: /<foreignObject[\s>/]/i
+  },
+  {
+    id: "svg-use-external",
+    description: "<use xlink:href or href pointing to external resource (non-fragment URL)",
+    // Match <use with href= where the value starts with a non-# character (external URL)
+    // [\"'][^#] catches quoted values not starting with #; [^\"'#\s>] catches unquoted
+    pattern: /<use[\s\S]{0,60}(?:xlink\s*:\s*)?href\s*=\s*(?:["'][^#]|[^"'#\s>])/i
+  },
+  {
+    id: "svg-animate-href",
+    description: '<animate attributeName="href" \u2014 can dynamically change href to javascript:',
+    pattern: /<animate[\s\S]{0,80}attributeName\s*=\s*["'][\s]*href["']/i
+  },
+  {
+    id: "svg-animate-xlinkhref",
+    description: '<animate attributeName="xlink:href"',
+    pattern: /<animate[\s\S]{0,80}attributeName\s*=\s*["'][\s]*xlink\s*:\s*href["']/i
+  },
+  {
+    id: "svg-set-javascript",
+    description: '<set to="javascript:..." \u2014 sets an attribute to a javascript: URI',
+    pattern: /<set[\s\S]{0,80}to\s*=\s*["']?\s*javascript\s*:/i
+  },
+  {
+    id: "svg-event-handler",
+    description: "SVG-specific event handler attributes: onload=, onerror=, onactivate=, etc.",
+    pattern: /\bon(?:load|error|activate|begin|end|repeat|focus|blur|click|mouse\w{1,20}|key\w{1,20})\s*=/i
+  },
+  {
+    id: "svg-handler-generic",
+    description: "Generic on* handler catch-all for SVG attributes",
+    pattern: /\bon\w{1,30}\s*=/i
+  },
+  {
+    id: "svg-filter-feimage",
+    description: "<feImage href= \u2014 filter primitive that can load external resources",
+    pattern: /<feImage[\s\S]{0,80}(?:xlink\s*:\s*)?href\s*=/i
+  },
+  {
+    id: "svg-image-external",
+    description: "<image xlink:href with http/https or javascript protocol",
+    pattern: /<image[\s\S]{0,80}(?:xlink\s*:\s*)?href\s*=\s*["']?\s*(?:https?|javascript)\s*:/i
+  },
+  {
+    id: "svg-style-javascript",
+    description: "style= attribute containing javascript: (e.g. background:url(javascript:...))",
+    pattern: /style\s*=[\s\S]{0,60}javascript\s*:/i
+  }
+];
+var svg_default = SVG_PATTERNS;
+
+// node_modules/is-unsafe/src/contexts/sql.js
+var SQL_PATTERNS = [
+  {
+    id: "sql-block-comment-open",
+    description: "SQL block comment open: /* ... */ \u2014 unusual in legitimate user text",
+    pattern: /\/\*/
+  },
+  {
+    id: "sql-union-select",
+    description: "UNION SELECT \u2014 most common SQL injection aggregation attack",
+    pattern: /\bUNION\s{1,20}(?:ALL\s{1,20})?SELECT\b/i
+  },
+  {
+    id: "sql-drop-table",
+    description: "DROP TABLE \u2014 destructive DDL injection",
+    pattern: /\bDROP\s{1,20}TABLE\b/i
+  },
+  {
+    id: "sql-drop-database",
+    description: "DROP DATABASE \u2014 destructive DDL injection",
+    pattern: /\bDROP\s{1,20}DATABASE\b/i
+  },
+  {
+    id: "sql-insert-into",
+    description: "INSERT INTO \u2014 data injection",
+    pattern: /\bINSERT\s{1,20}INTO\b/i
+  },
+  {
+    id: "sql-delete-from",
+    description: "DELETE FROM \u2014 data deletion injection",
+    pattern: /\bDELETE\s{1,20}FROM\b/i
+  },
+  {
+    id: "sql-update-set",
+    description: "UPDATE ... SET \u2014 data modification injection",
+    // Allows arbitrary content between UPDATE and SET (table name, alias, etc.)
+    pattern: /\bUPDATE\b[\s\S]{1,60}\bSET\b/i
+  },
+  {
+    id: "sql-exec-xp",
+    description: "EXEC xp_ \u2014 MSSQL extended stored procedure execution",
+    pattern: /\bEXEC(?:UTE)?\s{1,20}xp_/i
+  },
+  {
+    id: "sql-tautology-string",
+    description: `Classic string tautology: ' OR '1'='1 or " OR "1"="1"`,
+    // Last quote is optional — injection may truncate it: ' OR '1'='1--
+    pattern: /'\s{0,10}OR\s{0,10}'[^']{0,20}'\s*=\s*'[^']{0,20}/i
+  },
+  {
+    id: "sql-tautology-numeric",
+    description: "Numeric tautology: OR 1=1",
+    pattern: /\bOR\s{1,10}1\s*=\s*1\b/i
+  },
+  {
+    id: "sql-always-true-zero",
+    description: "Numeric tautology: OR 0=0",
+    pattern: /\bOR\s{1,10}0\s*=\s*0\b/i
+  },
+  {
+    id: "sql-sleep-benchmark",
+    description: "Time-based blind injection: SLEEP() or BENCHMARK()",
+    pattern: /\b(?:SLEEP|BENCHMARK)\s*\(/i
+  },
+  {
+    id: "sql-waitfor-delay",
+    description: "MSSQL time-based blind injection: WAITFOR DELAY",
+    pattern: /\bWAITFOR\s{1,20}DELAY\b/i
+  },
+  {
+    id: "sql-char-function",
+    description: "CHAR() function \u2014 used to obfuscate injected strings",
+    pattern: /\bCHAR\s*\(\s*\d{1,3}/i
+  },
+  {
+    id: "sql-information-schema",
+    description: "INFORMATION_SCHEMA \u2014 reconnaissance query for table/column enumeration",
+    pattern: /\bINFORMATION_SCHEMA\b/i
+  }
+];
+var sql_default = SQL_PATTERNS;
+
+// node_modules/is-unsafe/src/contexts/sql-strict.js
+var SQL_STRICT_EXTRA = [
+  {
+    id: "sql-line-comment",
+    description: "SQL line comment: -- followed by whitespace or end of string",
+    pattern: /--(?:\s|$)/
+  },
+  {
+    id: "sql-stacked-query",
+    description: "Stacked queries: semicolon immediately followed by a SQL keyword",
+    pattern: /;\s{0,10}(?:SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC)\b/i
+  },
+  {
+    id: "sql-hex-encoding",
+    description: "Hex-encoded string injection: 0x41414141 style (MySQL)",
+    pattern: /\b0x[0-9a-f]{4,}/i
+  }
+];
+var SQL_STRICT_PATTERNS = [...sql_default, ...SQL_STRICT_EXTRA];
+var sql_strict_default = SQL_STRICT_PATTERNS;
+
+// node_modules/is-unsafe/src/contexts/shell.js
+var SHELL_PATTERNS = [
+  {
+    id: "shell-path-traversal-unix",
+    description: "Unix path traversal: ../  \u2014 climbing the directory tree",
+    pattern: /\.\.\//
+  },
+  {
+    id: "shell-path-traversal-windows",
+    description: "Windows path traversal: ..\\ \u2014 climbing the directory tree",
+    pattern: /\.\.\\/
+  },
+  {
+    id: "shell-path-traversal-encoded",
+    description: "URL-encoded path traversal: %2e%2e or %2f variants",
+    pattern: /%2e%2e|%2f\.\.|\.\.%2f/i
+  },
+  {
+    id: "shell-null-byte",
+    description: "Null byte injection: \\x00 or %00 \u2014 truncates strings in C-backed functions",
+    pattern: /\x00|%00/
+  },
+  {
+    id: "shell-semicolon",
+    description: "Semicolon command separator: cmd1; cmd2",
+    pattern: /;/
+  },
+  {
+    id: "shell-pipe",
+    description: "Pipe operator: cmd1 | cmd2",
+    pattern: /\|/
+  },
+  {
+    id: "shell-and-operator",
+    description: "AND operator: cmd1 && cmd2",
+    pattern: /&&/
+  },
+  {
+    id: "shell-or-operator",
+    description: "OR operator: cmd1 || cmd2",
+    pattern: /\|\|/
+  },
+  {
+    id: "shell-backtick",
+    description: "Backtick command substitution: `cmd`",
+    pattern: /`/
+  },
+  {
+    id: "shell-dollar-paren",
+    description: "Dollar-paren command substitution: $(cmd)",
+    pattern: /\$\(/
+  },
+  {
+    id: "shell-dollar-brace",
+    description: "Dollar-brace variable expansion: ${var} \u2014 can be abused for injection",
+    pattern: /\$\{/
+  },
+  {
+    id: "shell-redirect-out",
+    description: "Output redirection: cmd > file or cmd >> file",
+    pattern: />{1,2}/
+  },
+  {
+    id: "shell-redirect-in",
+    description: "Input redirection: cmd < file",
+    pattern: /</
+  },
+  {
+    id: "shell-newline-injection",
+    description: "Newline injection: \\n or \\r \u2014 can inject new shell commands",
+    pattern: /[\n\r]/
+  },
+  {
+    id: "shell-glob-star",
+    description: "Glob expansion: * or ? \u2014 can expand to unintended files",
+    // Only flag when combined with path separators to reduce false positives
+    pattern: /[/\\][*?]/
+  },
+  {
+    id: "shell-absolute-root",
+    description: "Absolute root path injection: string starting with / or \\ (Windows UNC)",
+    pattern: /^(?:\/|\\\\)/
+  },
+  {
+    id: "shell-windows-drive",
+    description: "Windows drive letter path injection: C:\\ or D:/",
+    pattern: /^[a-zA-Z]:[/\\]/
+  },
+  {
+    id: "shell-curl-wget",
+    description: "curl/wget with URL or flags \u2014 can exfiltrate data or download payloads",
+    // Require a URL scheme (http/https/ftp) or a flag (-) to reduce false positives
+    // "curl is a tool" won't match; "curl http://..." or "curl -s ..." will
+    pattern: /\b(?:curl|wget)\s+(?:https?:\/\/|ftp:\/\/|-)/i
+  }
+];
+var shell_default = SHELL_PATTERNS;
+
+// node_modules/is-unsafe/src/contexts/redos.js
+var REDOS_PATTERNS = [
+  {
+    id: "redos-nested-quantifier-plus",
+    description: "Nested + quantifier inside a group with outer quantifier: (a+)+, (.+b)*, etc.",
+    // Matches any group containing a + quantifier, with an outer * or + — catches (a+)+, (.+b)*, etc.
+    pattern: /\([^)]*\+[^)]*\)[+*]/
+  },
+  {
+    id: "redos-nested-quantifier-star",
+    description: "Nested * quantifier: (a*)* or (a*)+ \u2014 catastrophic backtracking",
+    pattern: /\([^)]*\*[^)]*\)[*+]/
+  },
+  {
+    id: "redos-nested-groups",
+    description: "Doubly nested quantified groups: ((a+)+) \u2014 guaranteed catastrophic",
+    pattern: /\(\([^)]{0,40}\)[+*]\)[+*]/
+  },
+  {
+    id: "redos-alternation-overlap",
+    description: "Overlapping alternation under quantifier: (a|a)+ \u2014 ambiguous NFA paths",
+    // Detect repeated identical alternatives under a quantifier
+    pattern: /\(([^|()]{1,20})\|(?:\1)(?:\|[^|()]{1,20}){0,5}\)[+*?]{1,2}/
+  },
+  {
+    id: "redos-star-plus-concat",
+    description: "(x*x)+ pattern \u2014 triggers super-linear backtracking",
+    pattern: /\([^)]{0,10}\*[^)]{0,10}\)[+*]/
+  },
+  {
+    id: "redos-dot-star-greedy",
+    description: "(.*){n,} or (.+){n,} \u2014 repeated greedy dot quantifiers",
+    pattern: /\(\.[*+]\)\{?\d/
+  },
+  {
+    id: "redos-large-repetition",
+    description: "Very large fixed or range repetition count {1000,} or {1000,n} \u2014 denial of service via backtracking",
+    // Matches { followed by 4+ digits (≥1000), then optional ,digits }
+    pattern: /\{\d{4,}(?:,\d*)?\}/
+  },
+  {
+    id: "redos-catastrophic-alternation",
+    description: "Long alternation with many similar branches \u2014 polynomial backtracking risk",
+    // Heuristic: 10+ pipe-separated alternatives in a single group
+    pattern: /\([^)]{0,200}(?:\|[^|)]{0,50}){9,}\)/
+  }
+];
+var redos_default = REDOS_PATTERNS;
+
+// node_modules/is-unsafe/src/contexts/nosql.js
+var sep = `["'\\s]*:`;
+var NOSQL_PATTERNS = [
+  // ─── MongoDB $ operator injection ────────────────────────────────────────
+  {
+    id: "nosql-where-operator",
+    description: "$where \u2014 executes arbitrary JavaScript server-side in MongoDB",
+    pattern: new RegExp(`\\$where${sep}`, "i")
+  },
+  {
+    id: "nosql-ne-operator",
+    description: '$ne \u2014 "not equal" operator used to bypass equality checks',
+    pattern: new RegExp(`\\$ne${sep}`, "i")
+  },
+  {
+    id: "nosql-gt-operator",
+    description: '$gt \u2014 "greater than" used to bypass password/value checks',
+    pattern: new RegExp(`\\$gte?${sep}`, "i")
+  },
+  {
+    id: "nosql-lt-operator",
+    description: '$lt / $lte \u2014 "less than" bypass variants',
+    pattern: new RegExp(`\\$lte?${sep}`, "i")
+  },
+  {
+    id: "nosql-regex-operator",
+    description: "$regex \u2014 can be used to extract data character by character (blind injection)",
+    pattern: new RegExp(`\\$regex${sep}`, "i")
+  },
+  {
+    id: "nosql-or-operator",
+    description: "$or \u2014 logical OR; used to create always-true conditions",
+    pattern: new RegExp(`\\$or${sep}\\s*\\[`, "i")
+  },
+  {
+    id: "nosql-and-operator",
+    description: "$and \u2014 logical AND operator injection",
+    pattern: new RegExp(`\\$and${sep}\\s*\\[`, "i")
+  },
+  {
+    id: "nosql-nor-operator",
+    description: "$nor \u2014 logical NOR operator injection",
+    pattern: new RegExp(`\\$nor${sep}\\s*\\[`, "i")
+  },
+  {
+    id: "nosql-exists-operator",
+    description: "$exists \u2014 can enumerate fields to determine schema",
+    pattern: new RegExp(`\\$exists${sep}`, "i")
+  },
+  {
+    id: "nosql-in-operator",
+    description: "$in \u2014 matches any value in a list; can enumerate values",
+    pattern: new RegExp(`\\$in${sep}\\s*\\[`, "i")
+  },
+  {
+    id: "nosql-expr-operator",
+    description: "$expr \u2014 allows aggregation expressions in queries (MongoDB 3.6+)",
+    pattern: new RegExp(`\\$expr${sep}`, "i")
+  },
+  {
+    id: "nosql-function-operator",
+    description: "$function \u2014 executes arbitrary JavaScript in MongoDB 4.4+",
+    pattern: new RegExp(`\\$function${sep}`, "i")
+  },
+  {
+    id: "nosql-accumulator-operator",
+    description: "$accumulator \u2014 custom aggregation with arbitrary JS execution",
+    pattern: new RegExp(`\\$accumulator${sep}`, "i")
+  },
+  // ─── Prototype pollution ─────────────────────────────────────────────────
+  {
+    id: "nosql-proto-pollution",
+    description: "__proto__ \u2014 prototype pollution via object key injection",
+    pattern: /__proto__/
+  },
+  {
+    id: "nosql-constructor-prototype",
+    description: "constructor.prototype \u2014 alternative prototype pollution vector (dot notation or JSON key)",
+    // Matches dot-notation (obj.constructor.prototype) and JSON key adjacency
+    // ("constructor": {"prototype": ...})
+    pattern: /constructor[\s"':.,{\[]*prototype/i
+  },
+  {
+    id: "nosql-proto-bracket",
+    description: '["__proto__"] \u2014 bracket-notation prototype pollution',
+    pattern: /\[["']__proto__["']\]/
+  }
+];
+var nosql_default = NOSQL_PATTERNS;
+
+// node_modules/is-unsafe/src/contexts/log.js
+var LOG_PATTERNS = [
+  // ─── CRLF / newline injection ─────────────────────────────────────────────
+  {
+    id: "log-crlf-injection",
+    description: "CRLF injection: literal \\r or \\n embeds fake log lines",
+    pattern: /[\r\n]/
+  },
+  {
+    id: "log-url-encoded-crlf",
+    description: "URL-encoded CRLF: %0d, %0a, %0D, %0A \u2014 decoded by some log parsers",
+    pattern: /%0[dDaA]/
+  },
+  {
+    id: "log-unicode-newline",
+    description: "Unicode newline variants: U+2028 (line separator), U+2029 (paragraph separator)",
+    pattern: /[\u2028\u2029]/
+  },
+  // ─── Log4Shell / JNDI injection (CVE-2021-44228) ─────────────────────────
+  {
+    id: "log-log4shell-jndi",
+    description: "Log4Shell: ${jndi:...} triggers remote code execution in Apache Log4j",
+    pattern: /\$\{jndi\s*:/i
+  },
+  {
+    id: "log-log4shell-obfuscated",
+    description: "Obfuscated Log4Shell: ${::-j}... lookup-bypass prefix used to evade WAF detection",
+    // ${::- is the Log4j lookup-bypass escape sequence; presence alone is suspicious
+    pattern: /\$\{::-/
+  },
+  {
+    id: "log-log4j-lookup",
+    description: "Log4j lookup syntax: ${env:...}, ${sys:...}, ${ctx:...} \u2014 data exfiltration",
+    pattern: /\$\{(?:env|sys|ctx|main|map|sd|web|docker|k8s|spring)\s*:/i
+  },
+  // ─── Server-Side Template Injection (SSTI) in log messages ───────────────
+  {
+    id: "log-ssti-double-brace",
+    description: "SSTI double-brace: {{expression}} \u2014 Jinja2, Twig, Handlebars, etc.",
+    pattern: /\{\{[\s\S]{0,80}\}\}/
+  },
+  {
+    id: "log-ssti-hash-brace",
+    description: "SSTI hash-brace: #{expression} \u2014 Thymeleaf, Velocity, Ruby ERB",
+    pattern: /#\{[\s\S]{0,80}\}/
+  },
+  {
+    id: "log-ssti-dollar-brace",
+    description: "SSTI/EL injection: ${expression with operators or method calls} \u2014 JSP EL, Freemarker, SpEL",
+    // Require that the ${...} content looks like an expression, not a plain variable name.
+    // Flags if the content contains: . ( * + operators, or known SSTI keywords.
+    // This avoids flagging ${PATH}, ${HOME} etc. (plain shell variables).
+    pattern: /\$\{[^}]*(?:\.|\(|\*|\+|\bclass\b|\bruntime\b|\bprocess\b|\bexec\b)[^}]{0,80}\}/i
+  },
+  {
+    id: "log-ssti-percent-tag",
+    description: "SSTI ERB/ASP tag: <%= expression %> \u2014 Ruby ERB, ASP",
+    pattern: /<%=[\s\S]{0,80}%>/
+  },
+  // ─── Null byte ────────────────────────────────────────────────────────────
+  {
+    id: "log-null-byte",
+    description: "Null byte: \\x00 or %00 \u2014 can truncate log entries in C-backed loggers",
+    pattern: /\x00|%00/
+  },
+  // ─── ANSI escape injection ────────────────────────────────────────────────
+  {
+    id: "log-ansi-escape",
+    description: "ANSI escape sequence: ESC[ \u2014 can manipulate terminal output when logs are tailed",
+    pattern: /\x1b\[/
+  }
+];
+var log_default = LOG_PATTERNS;
+
+// node_modules/is-unsafe/src/registry.js
+var CONTEXT_REGISTRY = {
+  HTML: html_default,
+  XML: xml_default,
+  SVG: svg_default,
+  SQL: sql_default,
+  "SQL-STRICT": sql_strict_default,
+  SHELL: shell_default,
+  REDOS: redos_default,
+  NOSQL: nosql_default,
+  LOG: log_default
+};
+var registry_default = CONTEXT_REGISTRY;
+var VALID_CONTEXTS = Object.freeze(
+  Object.fromEntries(Object.keys(CONTEXT_REGISTRY).map((k) => [k, k]))
+);
+
+// node_modules/is-unsafe/src/index.js
+function assertString(value) {
+  if (typeof value !== "string") {
+    throw new TypeError(
+      `is-unsafe: first argument must be a string, got ${typeof value}`
+    );
+  }
+}
+function assertContext(context) {
+  if (context instanceof RegExp) return;
+  if (typeof context === "string") {
+    if (!registry_default[context]) {
+      throw new TypeError(
+        `is-unsafe: unknown context "${context}". Valid contexts: ${Object.keys(VALID_CONTEXTS).join(", ")}`
+      );
+    }
+    return;
+  }
+  if (Array.isArray(context)) {
+    if (context.length === 0) {
+      throw new TypeError("is-unsafe: context array must not be empty");
+    }
+    for (const c of context) {
+      if (typeof c !== "string" || !registry_default[c]) {
+        throw new TypeError(
+          `is-unsafe: unknown context "${c}" in array. Valid contexts: ${Object.keys(VALID_CONTEXTS).join(", ")}`
+        );
+      }
+    }
+    return;
+  }
+  throw new TypeError(
+    `is-unsafe: second argument must be a context string, array of context strings, or RegExp. Got: ${typeof context}`
+  );
+}
+function matchContext(value, contextName) {
+  const patterns = registry_default[contextName];
+  for (const rule of patterns) {
+    if (rule.pattern.test(value)) {
+      return { context: contextName, id: rule.id, description: rule.description, pattern: rule.pattern };
+    }
+  }
+  return null;
+}
+function isUnsafe(value, context) {
+  assertString(value);
+  assertContext(context);
+  if (context instanceof RegExp) {
+    return context.test(value);
+  }
+  if (typeof context === "string") {
+    return matchContext(value, context) !== null;
+  }
+  for (const c of context) {
+    if (matchContext(value, c) !== null) return true;
+  }
+  return false;
+}
+
 // node_modules/fast-xml-parser/src/xmlparser/OrderedObjParser.js
 function extractRawAttributes(prefixedAttrs, options) {
   if (!prefixedAttrs) return {};
@@ -29526,7 +30574,7 @@ function extractNamespace(rawTagName) {
   return void 0;
 }
 var OrderedObjParser = class {
-  constructor(options) {
+  constructor(options, externalEntities) {
     this.options = options;
     this.currentNode = null;
     this.tagsNodeStack = [];
@@ -29549,13 +30597,18 @@ var OrderedObjParser = class {
       if (typeof this.options.htmlEntities === "object") namedEntities = this.options.htmlEntities;
       else if (this.options.htmlEntities === true) namedEntities = { ...COMMON_HTML, ...CURRENCY };
       this.entityDecoder = new EntityDecoder({
-        namedEntities,
+        namedEntities: { ...namedEntities, ...externalEntities },
         numericAllowed: this.options.htmlEntities,
         limit: {
           maxTotalExpansions: this.options.processEntities.maxTotalExpansions,
           maxExpandedLength: this.options.processEntities.maxExpandedLength,
           applyLimitsTo: this.options.processEntities.appliesTo
-        }
+        },
+        // onExternalEntity: (name, value) => isUnsafe(value) ? 'block' : 'allow',
+        onInputEntity: (name, value) => (
+          //TODO: VALID_CONTEXTS.HTML should be set only if this.options.htmlEntities
+          isUnsafe(value, [VALID_CONTEXTS.HTML, VALID_CONTEXTS.XML]) ? ENTITY_ACTION.BLOCK : ENTITY_ACTION.ALLOW
+        )
         //postCheck: resolved => resolved
       });
     }
@@ -29671,7 +30724,7 @@ function buildAttributesMap(attrStr, jPath, tagName, force = false) {
       }
     }
     if (!hasAttrs) return;
-    if (options.attributesGroupName) {
+    if (options.attributesGroupName && !options.preserveOrder) {
       const attrCollection = {};
       attrCollection[options.attributesGroupName] = attrs;
       return attrCollection;
@@ -29729,6 +30782,7 @@ var parseXml = function(xmlData) {
         if (attsMap) {
           const ver = attsMap[this.options.attributeNamePrefix + "version"];
           this.entityDecoder.setXmlVersion(Number(ver) || 1);
+          docTypeReader.setXmlVersion(Number(ver) || 1);
         }
         if (options.ignoreDeclaration && tagData.tagName === "?xml" || options.ignorePiTags) {
         } else {
@@ -29934,10 +30988,11 @@ function isItStopNode() {
 }
 function tagExpWithClosingIndex(xmlData, i, closingChar = ">") {
   let attrBoundary = 0;
-  const chars = [];
   const len = xmlData.length;
   const closeCode0 = closingChar.charCodeAt(0);
   const closeCode1 = closingChar.length > 1 ? closingChar.charCodeAt(1) : -1;
+  let result = "";
+  let segmentStart = i;
   for (let index = i; index < len; index++) {
     const code = xmlData.charCodeAt(index);
     if (attrBoundary) {
@@ -29947,16 +31002,17 @@ function tagExpWithClosingIndex(xmlData, i, closingChar = ">") {
     } else if (code === closeCode0) {
       if (closeCode1 !== -1) {
         if (xmlData.charCodeAt(index + 1) === closeCode1) {
-          return { data: String.fromCharCode(...chars), index };
+          result += xmlData.substring(segmentStart, index);
+          return { data: result, index };
         }
       } else {
-        return { data: String.fromCharCode(...chars), index };
+        result += xmlData.substring(segmentStart, index);
+        return { data: result, index };
       }
-    } else if (code === 9) {
-      chars.push(32);
-      continue;
+    } else if (code === 9 && !attrBoundary) {
+      result += xmlData.substring(segmentStart, index) + " ";
+      segmentStart = index + 1;
     }
-    chars.push(code);
   }
 }
 function findClosingIndex(xmlData, str, i, errMsg) {
@@ -30030,7 +31086,7 @@ function readStopNodeData(xmlData, tagName, i) {
         const closeIndex = findClosingIndex(xmlData, "]]>", i, "StopNode is not closed.") - 2;
         i = closeIndex;
       } else {
-        const tagData = readTagExp(xmlData, i, ">");
+        const tagData = readTagExp(xmlData, i, false);
         if (tagData) {
           const openTagName = tagData && tagData.tagName;
           if (openTagName === tagName && tagData.tagExp[tagData.tagExp.length - 1] !== "/") {
@@ -30116,6 +31172,9 @@ function compress(arr, options, matcher, readonlyMatcher) {
     } else if (tagObj[property]) {
       let val = compress(tagObj[property], options, matcher, readonlyMatcher);
       const isLeaf = isLeafTag(val, options);
+      if (Object.keys(val).length === 0 && options.alwaysCreateTextNode) {
+        val[options.textNodeName] = "";
+      }
       if (tagObj[":@"]) {
         assignAttributes(val, tagObj[":@"], readonlyMatcher, options);
       } else if (Object.keys(val).length === 1 && val[options.textNodeName] !== void 0 && !options.alwaysCreateTextNode) {
@@ -30209,8 +31268,7 @@ var XMLParser = class {
         throw Error(`${result.err.msg}:${result.err.line}:${result.err.col}`);
       }
     }
-    const orderedObjParser = new OrderedObjParser(this.options);
-    orderedObjParser.entityDecoder.setExternalEntities(this.externalEntities);
+    const orderedObjParser = new OrderedObjParser(this.options, this.externalEntities);
     const orderedResult = orderedObjParser.parseXml(xmlData);
     if (this.options.preserveOrder || orderedResult === void 0) return orderedResult;
     else return prettify(orderedResult, this.options, orderedObjParser.matcher, orderedObjParser.readonlyMatcher);
