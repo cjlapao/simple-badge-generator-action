@@ -90,7 +90,7 @@
     "@eslint/eslintrc": "^3.3.6",
     "@eslint/js": "^10.0.1",
     "@types/jest": "^30.0.0",
-    "@types/jsdom": "^28.0.3",
+    "@types/jsdom": "^30.0.0",
     "@types/node": "^26.1.2",
     "@types/string-pixel-width": "^1.11.0",
     "@typescript-eslint/eslint-plugin": "^8.66.0",
