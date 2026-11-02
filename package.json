@@ -85,7 +85,7 @@
     "textlint-filter-rule-allowlist": "^4.0.0"
   },
   "devDependencies": {
-    "@babel/core": "^8.0.7",
+    "@babel/core": "^8.0.9",
     "@babel/preset-env": "^8.0.7",
     "@eslint/eslintrc": "^3.3.7",
     "@eslint/js": "^10.0.1",
@@ -93,8 +93,8 @@
     "@types/jsdom": "^30.0.0",
     "@types/node": "^26.6.5",
     "@types/string-pixel-width": "^1.11.0",
-    "@typescript-eslint/eslint-plugin": "^8.72.0",
-    "@typescript-eslint/parser": "^8.72.0",
+    "@typescript-eslint/eslint-plugin": "^8.72.1",
+    "@typescript-eslint/parser": "^8.72.1",
     "@vercel/ncc": "^0.45.0",
     "babel-preset-jest": "^30.5.0",
     "eslint": "^10.13.0",
